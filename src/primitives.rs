@@ -45,6 +45,7 @@ pub enum GameStatus {
     InProgress(Player),
     WaitingForPlayers(bool),
     WaitingForChoice(Player, Vec<Card>),
+    InvalidMove(&'static str),
 }
 
 pub type CardDeck = Vec<Card>;

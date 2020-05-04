@@ -118,7 +118,12 @@ impl Game for Briscola {
         2..4
     }
     fn handle_move(&mut self, by: &Player, card: Card) -> Vec<GameStatus> {
-        // FIXME bloccare mossa se non è il tuo turno
+        // bloccare mossa se non è il tuo turno
+        if self.get_next_player().is_none() {
+            return vec![GameStatus::InvalidMove("La partita non è ancora iniziata")];
+        } else if &self.get_next_player().unwrap() != by {
+            return vec![GameStatus::InvalidMove("Non è ancora il tuo turno!")];
+        }
         let player_index = self.players.iter().position(|x| x == by).unwrap();
         let next_player = self.players.clone()[(player_index + 1) % self.players.len()].clone();
         self.next_player = Some(next_player.clone());
@@ -151,7 +156,7 @@ impl Game for Briscola {
             } else {
                 // Do le carte
                 for player in &self.players {
-                    // FIXME dare le carte in ordine giusto in base alla fittoria
+                    // FIXME dare le carte in ordine giusto in base alla vittoria
                     self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
                 }
                 self.next_player = Some(winner.clone());
@@ -163,7 +168,10 @@ impl Game for Briscola {
         }
     }
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
-        // TODO ritornare un errore se la partita è già iniziata
+        if self.deck.len() < 40 {
+            // La partita è gia cominciata, errore!
+            return Err("Non è possibile aggiungersi ad una partita già cominciata!");
+        }
         if self.players.len() <= self.get_num_players().end as usize {
             if self.players.len() == 0 {
                 self.next_player = Some(player.clone());
@@ -171,11 +179,7 @@ impl Game for Briscola {
             let is_ready = self.players.len() <= self.get_num_players().end as usize && self.get_num_players().start as usize <= self.players.len();
             // Aggiungo il giocatore
             self.players.push(player.clone());
-            // Do le carte
-            let mut hand = Vec::new();
-            for _ in 0..3 {
-                hand.push(self.deck.pop().unwrap());
-            }
+            let hand = Vec::new();
             self.in_hand.insert(player.clone(), hand);
             // Lo assegno ad un team
             self.teams[self.players.len() % 2].push(player.clone());
@@ -189,20 +193,13 @@ impl Game for Briscola {
         self.next_player.clone()
     }
     fn start(&mut self) -> GameStatus {
-        // FIXME Dare le carte qui e non quando si aggiungono i giocatori
-        // FIXME decidere la briscola dopo aver rimosso la carta
         if self.players.len() == 3 {
             // FIXME controllare che non sia di briscola
             // Spostare il terzo giocatore in un team a se stante e togliere una carta
             if let Some(i) = self.deck.iter().position(|x| x.0 == CardType::Numeric(2)) {
                 self.deck.remove(i);
-            } else if let Some(i) = self.deck.iter().position(|x| x.0 == CardType::Numeric(4)) {
-                self.deck.remove(i);
-            } else if let Some(i) = self.deck.iter().position(|x| x.0 == CardType::Numeric(5)) {
-                self.deck.remove(i);
             } else {
-                // Terminiamo in anticipo il gioco, non bellissimo
-                // Non si può mica togliere un sei eh, o un sette, altrimenti come si fa a giocare?
+                // Terminiamo in anticipo il gioco, ma non dovrebbe mai succedere
                 // Ma piutòst che gnit, l'è mej piutòst
                 return GameStatus::GameEnded;
             }
@@ -211,6 +208,14 @@ impl Game for Briscola {
             let moved_player = self.teams[0].pop().unwrap();
             self.teams[2].push(moved_player);
             self.player_team.insert(self.teams[2][0].clone(), self.players.len() % 2);
+        }
+        // Scelgo la briscola
+        self.briscola = self.deck.first().unwrap().1.clone();
+        // Do le carte
+        for player in &self.players {
+            for _ in 0..3 {
+                self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
+            }
         }
         let player = self.players[0].clone();
         GameStatus::WaitingForChoice(player.clone(), self.in_hand.get(&player).unwrap().clone())

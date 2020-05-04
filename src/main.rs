@@ -21,7 +21,7 @@ fn main() {
         let card = game_status.1.clone()[index].clone();
         let outcome = b.handle_move(&game_status.0, card);
         println!("{:?}", outcome);
-        if let Some(x) = outcome.iter().find(|x| match x {primitives::GameStatus::GameEnded => true, _ => false}) {
+        if let Some(_) = outcome.iter().find(|x| match x {primitives::GameStatus::GameEnded => true, _ => false}) {
             break;
         }
         if let Some(primitives::GameStatus::WaitingForChoice(x, y)) = outcome.iter().find(|x| match x {primitives::GameStatus::WaitingForChoice(_, _) => true, _ => false}) {
