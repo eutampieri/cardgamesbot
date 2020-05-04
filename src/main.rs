@@ -16,7 +16,7 @@ fn main() {
         _ => {unimplemented!()}
     };
     loop {
-        println!("Tocca a {}. Quale carta metti? {:?}", game_status.0.name, game_status.1);
+        println!("{}. Quale carta metti? {:?}", b.get_status(), game_status.1);
         let index: usize = read!();
         let card = game_status.1.clone()[index].clone();
         let outcome = b.handle_move(&game_status.0, card);

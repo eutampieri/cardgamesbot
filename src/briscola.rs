@@ -1,6 +1,7 @@
 use super::primitives::*;
 use std::collections::hash_map::*;
 use rand::seq::SliceRandom;
+use itertools::Itertools;
 
 #[derive(Debug)]
 pub struct Briscola {
@@ -17,6 +18,21 @@ pub struct Briscola {
     deck: CardDeck,
     briscola: CardSuit,
     next_player: Option<Player>,
+}
+
+impl Briscola {
+    fn get_card_name(card: &Card) -> String {
+        let c_type = match card.0 {
+            CardType::Jack => "Fante".to_owned(),
+            CardType::Queen => "Cavallo".to_owned(),
+            CardType::King => "Re".to_owned(),
+            CardType::Numeric(x) => match x {
+                1 => "Asso".to_owned(),
+                _ => format!("{}", x)
+            }
+        };
+        format!("{} di {}", c_type, String::from(&card.1))
+    }
 }
 
 impl Game for Briscola {
@@ -210,5 +226,17 @@ impl Game for Briscola {
                 (player_lst, score)
             })
             .collect()
+    }
+    fn get_status(&self) -> String {
+        let teams = self.teams.iter().enumerate()
+            .map(|x| format!("Team {}: {}", x.0 + 1, x.1.iter().map(|y| y.name.clone()).join(", ")))
+            .join("\n");
+        format!("Partita di:\n{}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
+            teams,
+            self.get_scores().iter().enumerate().map(|x| format!("Team {}: {} punti", x.0, (x.1).1)).join("\n"),
+            String::from(&self.briscola),
+            self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
+            self.table.iter().map(|x| format!("- {} ({})", Self::get_card_name(&x.1), x.0.name)).join("\n")
+        )
     }
 }

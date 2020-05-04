@@ -19,6 +19,16 @@ pub enum CardSuit {
     Denari,
     Bastoni,
 }
+impl From<&CardSuit> for String {
+    fn from(s: &CardSuit) -> Self {
+        match s {
+            CardSuit::Bastoni => "Bastoni",
+            CardSuit::Spade => "Spade",
+            CardSuit::Coppe => "Coppe",
+            CardSuit::Denari => "Denari"
+        }.to_owned()
+    }
+}
 
 pub type Card = (CardType, CardSuit);
 
@@ -57,4 +67,5 @@ pub trait Game {
     fn get_next_player(&self) -> Option<Player>;
     fn start(&mut self) -> GameStatus;
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)>;
+    fn get_status(&self) -> String;
 }
