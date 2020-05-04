@@ -151,6 +151,7 @@ impl Game for Beccaccino {
             if self.table.len() == 0 {
                 // è la prima carta, salto le limitazioni del seme
                 self.table.push((by.clone(), card));
+                self.next_player = Some(next_player_index);
             } else if self.table.len() < 4 {
                 // Controllo il seme
                 if card.1 == (self.table[0].1).1 {
