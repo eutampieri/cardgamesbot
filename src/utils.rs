@@ -42,3 +42,10 @@ pub fn random_deck(of_type: CardDeckType) -> Vec<Card> {
         CardDeckType::Poker => unimplemented!()
     }
 }
+
+pub fn zero() -> fraction::Fraction {
+    fraction::Fraction::new(0u8, 1u8)
+}
+pub fn one() -> fraction::Fraction {
+    fraction::Fraction::new(1u8, 1u8)
+}
