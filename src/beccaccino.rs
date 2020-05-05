@@ -109,7 +109,7 @@ impl Game for Beccaccino {
                         (y.1).0.iter()
                     .map(|x| Self::get_card_rank(&x.0))
                     .sum();
-                (player_lst, score)
+                (player_lst, score.floor())
             })
             .collect()
     }
