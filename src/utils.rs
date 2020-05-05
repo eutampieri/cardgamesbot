@@ -3,9 +3,9 @@ use rand::seq::SliceRandom;
 
 pub fn get_card_name(card: &Card) -> String {
     let c_type = match card.0 {
-        CardType::Jack => "Fante".to_owned(),
-        CardType::Queen => "Cavallo".to_owned(),
-        CardType::King => "Re".to_owned(),
+        CardType::Jack => "🚶‍♂️".to_owned(),
+        CardType::Queen => "🐴".to_owned(),
+        CardType::King => "🤴".to_owned(),
         CardType::Numeric(x) => match x {
             1 => "Asso".to_owned(),
             _ => format!("{}", x)

@@ -107,8 +107,7 @@ impl Game for Beccaccino {
                 let player_lst = y.0.iter().map(|z| self.players[*z].clone()).collect();
                 let score = {if (y.1).1 {utils::one()} else {utils::zero()}} +
                         (y.1).0.iter()
-                    .map(|x| &x.0)
-                    .map(|x| Self::get_card_rank(&x))
+                    .map(|x| Self::get_card_rank(&x.0))
                     .sum();
                 (player_lst, score)
             })
