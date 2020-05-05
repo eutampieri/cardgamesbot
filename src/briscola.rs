@@ -121,9 +121,11 @@ impl Game for Briscola {
                 vec![GameStatus::GameEnded]
             } else {
                 // Do le carte
-                for player in &self.players {
-                    // FIXME dare le carte in ordine giusto in base alla vittoria
-                    self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
+                if self.deck.len() >= self.players.len() {
+                    for player in &self.players {
+                        // FIXME dare le carte in ordine giusto in base alla vittoria
+                        self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
+                    }
                 }
                 self.next_player = Some(winner.clone());
                 vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::RoundWon(winner, next_player)]
