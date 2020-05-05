@@ -48,6 +48,7 @@ pub enum GameStatus {
     InvalidMove(&'static str),
     WaitingForChoiceCustomMessage(Player, Vec<Card>, &'static str),
     GameReady,
+    NotifyUser(Player, String),
 }
 
 pub type CardDeck = Vec<Card>;
