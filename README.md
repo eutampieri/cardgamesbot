@@ -1,2 +1,2 @@
-# [@cardgamesbot](t.me/giocoacartebot)
+# [@giocoacartebot](t.me/giocoacartebot)
 A Telegram bot to play card games
