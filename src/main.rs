@@ -2,6 +2,8 @@ mod primitives;
 mod briscola;
 mod beccaccino;
 mod utils;
+mod telegram;
+
 use primitives::Game;
 use text_io::read;
 

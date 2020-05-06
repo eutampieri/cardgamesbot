@@ -38,9 +38,9 @@ pub struct Player {
     pub name: String,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum GameStatus {
-    RoundWon(Player, Player),
+    RoundWon(Player),
     GameEnded,
     InProgress(Player),
     WaitingForPlayers(bool),
@@ -49,6 +49,7 @@ pub enum GameStatus {
     WaitingForChoiceCustomMessage(Player, Vec<Card>, &'static str),
     GameReady,
     NotifyUser(Player, String),
+    NotifyRoom(String),
 }
 
 pub type CardDeck = Vec<Card>;
@@ -72,4 +73,22 @@ pub trait Game {
     fn start(&mut self) -> GameStatus;
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)>;
     fn get_status(&self) -> String;
+    fn get_players(&self) -> Vec<Player>;
+}
+
+pub type DispatchableStatus = (Player, GameStatus);
+
+impl GameStatus {
+    /// This function routes the status to the right players
+    pub fn dispatch(&self, game: &impl Game) -> Vec<DispatchableStatus> {
+        match self.clone() {
+            // Messages for selected players
+            // GameStatus::InProgress(p) => vec![(p, self.clone())],
+            GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone())],
+            GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone())],
+            GameStatus::NotifyUser(p, _) => vec![(p, self.clone())],
+            // Everything else will sent to everybody in the game
+            _ => game.get_players().iter().map(|x| (x.clone(), self.clone())).collect::<Vec<DispatchableStatus>>()
+        }
+    }
 }

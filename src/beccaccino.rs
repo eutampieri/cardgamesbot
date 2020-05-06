@@ -197,14 +197,21 @@ impl Game for Beccaccino {
                 if self.in_hand.iter().map(|x| x.len()).max().unwrap() == 0 {
                     self.won_cards[winner_team_index].1 = true;
                     return vec![
-                        GameStatus::RoundWon(self.players[winner_index].clone(), self.players[winner_index].clone()),
-                        GameStatus::GameEnded
+                        GameStatus::RoundWon(self.players[winner_index].clone()),
+                        GameStatus::GameEnded,
+                        GameStatus::NotifyRoom(self.get_status())
                     ];
                 } else {
                     self.next_player = Some(winner_index);
                 }
             }
-            vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
+            vec![
+                GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone()),
+                GameStatus::NotifyUser(self.players[next_player_index].clone(), self.get_status())
+            ]
         }
+    }
+    fn get_players(&self) -> Vec<Player> {
+        self.players.clone()
     }
 }

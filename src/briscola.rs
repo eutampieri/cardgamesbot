@@ -128,7 +128,7 @@ impl Game for Briscola {
                     }
                 }
                 self.next_player = Some(winner.clone());
-                vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::RoundWon(winner, next_player)]
+                vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::RoundWon(winner)]
             }
         } else {
             self.next_player = Some(next_player.clone());
@@ -211,5 +211,8 @@ impl Game for Briscola {
             self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
         )
+    }
+    fn get_players(&self) -> Vec<Player> {
+        self.players.clone()
     }
 }
