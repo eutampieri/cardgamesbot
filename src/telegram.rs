@@ -1,6 +1,7 @@
 use std::env;
 use itertools::Itertools;
 use super::primitives;
+use super::utils;
 
 pub struct Button {
     pub id: String,
@@ -66,14 +67,60 @@ impl Telegram {
 
 }
 
+/// This function converts a list of cards into an array of buttons
+fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
+    let mut res = vec![];
+    // Now add a row every 3 cards
+    for _ in (0..cards.len()).skip(3) {
+        res.push(vec![]);
+    }
+    // Let's add the cards
+    for (i, card) in cards.iter().enumerate() {
+        let row_number = i / 3;
+        res[row_number].push(Button{
+            text: utils::get_card_name(card),
+            id: format!("handle_move:{}", base64::encode(bincode::serialize(card).unwrap()))
+        //                                                                  ^
+        //I'm serializing cards to deserialize later -----------------------|
+        });
+    }
+    res
+}
+
 impl Message for primitives::DispatchableStatus {
     fn get_chat_id(&self) -> i64 {
         self.0.id
     }
     fn get_text(&self) -> String {
-        use primitives::GameStatus;
-        match self.1 {
-            GameStatus::GameEnded => 
+        use primitives::GameStatus::*;
+        match self.1.clone() {
+            GameEnded => "La partita è finita!".to_owned(),
+            RoundWon(p) => format!("{} ha vinto questo round", p.name),
+            InProgress(p) => format!("Tocca a {}", p.name),
+            WaitingForPlayers(_) => format!("In attesa di giocatori..."),
+            WaitingForChoice(_, _) => "Scegli una carta:".to_owned(),
+            InvalidMove(msg) => format!("Questa mossa non è valida! {}", msg),
+            WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
+            GameReady => "La partita è pronta!".to_owned(),
+            NotifyUser(_, msg) => msg,
+            NotifyRoom(msg) => msg,
+        }
+    }
+    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
+        use primitives::GameStatus::*;
+        match self.1.clone() {
+            WaitingForPlayers(ready) => {
+                if ready {
+                    Some(vec![vec![Button{id: "start".to_owned(), text: "Avvia partita".to_owned()}]])
+                } else {
+                    None
+                }
+            },
+            WaitingForChoice(_, cards) => Some(deck_of_buttons(cards)),
+            WaitingForChoiceCustomMessage(_, cards, _) => Some(deck_of_buttons(cards)),
+            _ => None
         }
     }
 }
+
+//impl Message for Vec<primitives::DispatchableStatus> {}

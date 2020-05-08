@@ -1,18 +1,19 @@
 use std::cmp::{PartialEq, Eq};
 use std::hash::Hash;
+use serde::{Serialize, Deserialize};
 
 pub enum CardDeckType {
     Briscola,
     Poker,
 }
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum CardType {
     Numeric(u8),
     King,
     Queen, // Cavallo in Briscola
     Jack, // Fante in Briscola
 }
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum CardSuit {
     Spade,
     Coppe,

@@ -50,7 +50,7 @@ impl Game for Beccaccino {
         } else {
             self.players.push(player);
             if self.players.len() == 4 {
-                Ok(GameStatus::GameReady)
+                Ok(GameStatus::WaitingForPlayers(true))
             } else {
                 Ok(GameStatus::WaitingForPlayers(false))
             }
