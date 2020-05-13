@@ -123,7 +123,7 @@ impl Game for Briscola {
                 // Do le carte
                 if self.deck.len() >= self.players.len() {
                     for i in 0..self.players.len(){
-                        let receiving_player_position = (i + self.players.iter().position(|x| x == winner).unwrap()) % self.players.len();
+                        let receiving_player_position = (i + self.players.iter().position(|x| x == &winner).unwrap()) % self.players.len();
                         self.in_hand.get_mut(&self.players[receiving_player_position]).unwrap().push(self.deck.pop().unwrap());
                     }
                 }
