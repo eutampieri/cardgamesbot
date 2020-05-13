@@ -51,6 +51,7 @@ pub enum GameStatus {
     GameReady,
     NotifyUser(Player, String),
     NotifyRoom(String),
+    CardPlayed(Player, Card),
 }
 
 pub type CardDeck = Vec<Card>;

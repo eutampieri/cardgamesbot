@@ -82,7 +82,7 @@ impl Game for Briscola {
         let card_index = self.in_hand.get(by).unwrap().iter().position(|x| x.clone() == card).expect("Non trovo la carta");
         self.in_hand.get_mut(by).unwrap().remove(card_index);
         // E la metto sul tavolo
-        self.table.push((by.clone(), card));
+        self.table.push((by.clone(), card.clone()));
         if self.table.len() == self.players.len() { // Se tutti hanno messo una carta
             // Determinare la carta vincente
             let mut winner = (self.table[0]).clone().0;
@@ -110,7 +110,7 @@ impl Game for Briscola {
             }
             self.next_player = Some(winner.clone());
             let game_ended = self.in_hand.iter().map(|x| x.1.len()).max().unwrap() == 0;
-            let mut res = vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&winner).unwrap().clone()),GameStatus::RoundWon(winner)];
+            let mut res = vec![GameStatus::CardPlayed(by.clone(), card), GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&winner).unwrap().clone()),GameStatus::RoundWon(winner)];
             if game_ended {
                 res.push(GameStatus::GameEnded);
             }

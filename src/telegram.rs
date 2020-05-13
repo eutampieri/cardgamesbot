@@ -130,6 +130,7 @@ impl Message for primitives::DispatchableStatus {
             GameReady => "La partita è pronta!".to_owned(),
             NotifyUser(_, msg) => msg,
             NotifyRoom(msg) => msg,
+            CardPlayed(p, c) => format!("{} ha giocato {}", p.name, utils::get_card_name(&c)),
         }
     }
     fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
