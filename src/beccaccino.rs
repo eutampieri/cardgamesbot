@@ -79,6 +79,10 @@ impl Game for Beccaccino {
         }
     }
     fn start(&mut self) -> GameStatus {
+        // Se la partita è già cominciata segnalo l'errore
+        if self.in_hand[0].len() > 0 {
+            return GameStatus::InvalidMove("Il gioco è già iniziato, non puoi farlo reiniziare!");
+        }
         // Genero il mazzo e do le carte
         let deck = utils::random_deck(CardDeckType::Briscola);
         for i in 0..4 {
