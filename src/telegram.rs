@@ -5,6 +5,7 @@ use super::utils;
 use serde::Deserialize;
 use primitives::Game;
 
+#[derive(Debug)]
 pub struct Button {
     pub id: String,
     pub text: String,
@@ -97,6 +98,7 @@ fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
     for _ in (0..cards.len()).skip(3) {
         res.push(vec![]);
     }
+    res.push(vec![]);
     // Let's add the cards
     for (i, card) in cards.iter().enumerate() {
         let row_number = i / 3;
@@ -107,6 +109,7 @@ fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
         //I'm serializing cards to deserialize later -----------------------|
         });
     }
+    println!("{:?}", res);
     res
 }
 

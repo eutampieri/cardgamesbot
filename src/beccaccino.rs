@@ -32,15 +32,7 @@ impl Game for Beccaccino {
     fn get_name(&self) -> &str {
         "Beccaccino"
     }
-    fn init() -> Self {
-        Self {
-            players: vec![],
-            in_hand: vec![vec![], vec![], vec![], vec![]],
-            briscola: None,
-            table: vec![],
-            won_cards: vec![(vec![], false), (vec![], false)],
-            next_player: None
-        }
+    fn init(&mut self) {
     }
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
         if self.players.len() > 4 {
@@ -213,5 +205,21 @@ impl Game for Beccaccino {
     }
     fn get_players(&self) -> Vec<Player> {
         self.players.clone()
+    }
+    fn get_new_instance(&self) -> Box<dyn Game> {
+        Box::new(Self::default())
+    }
+}
+
+impl Default for Beccaccino {
+    fn default() -> Self {
+        Self {
+            players: vec![],
+            in_hand: vec![vec![], vec![], vec![], vec![]],
+            briscola: None,
+            table: vec![],
+            won_cards: vec![(vec![], false), (vec![], false)],
+            next_player: None
+        }
     }
 }

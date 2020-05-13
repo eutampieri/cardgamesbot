@@ -54,25 +54,10 @@ impl Game for Briscola {
             }
         }
     }
-    fn init() -> Self {
+    fn init(&mut self) {
         let deck = utils::random_deck(CardDeckType::Briscola);
-        let mut teams = Vec::new();
-        teams.push(Vec::new());
-        teams.push(Vec::new());
-        let mut wc = Vec::new();
-        wc.push(Vec::new());
-        wc.push(Vec::new());
-        Briscola{
-            table: Vec::new(),
-            players: Vec::new(),
-            in_hand: HashMap::new(),
-            teams: teams,
-            player_team: HashMap::new(),
-            won_cards: wc,
-            deck: deck.clone(),
-            briscola: deck.first().unwrap().1.clone(),
-            next_player: None,
-        }
+        self.deck = deck.clone();
+        self.briscola = deck.first().unwrap().1.clone();
     }
     fn get_name(&self) -> &str {
         "Briscola"
@@ -117,19 +102,19 @@ impl Game for Briscola {
             // Abbiamo determinato chi ha vinto la mano, assegnamogliela
             self.won_cards[*self.player_team.get(&winner).unwrap()].append(&mut self.table.iter().map(|x| x.1.clone()).collect());
             self.table.clear(); // Just in case...
-            if self.deck.len() == 0 {
-                vec![GameStatus::GameEnded]
-            } else {
-                // Do le carte
-                if self.deck.len() >= self.players.len() {
-                    for player in &self.players {
+            if self.deck.len() >= self.players.len() {
+                for player in &self.players {
                         // FIXME dare le carte in ordine giusto in base alla vittoria
                         self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
                     }
-                }
-                self.next_player = Some(winner.clone());
-                vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::RoundWon(winner)]
             }
+            self.next_player = Some(winner.clone());
+            let game_ended = self.in_hand.iter().map(|x| x.1.len()).max().unwrap() == 0;
+            let mut res = vec![GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&winner).unwrap().clone()),GameStatus::RoundWon(winner)];
+            if game_ended {
+                res.push(GameStatus::GameEnded);
+            }
+            res
         } else {
             self.next_player = Some(next_player.clone());
             vec![GameStatus::WaitingForChoice(next_player.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::InProgress(next_player)]
@@ -144,9 +129,9 @@ impl Game for Briscola {
             if self.players.len() == 0 {
                 self.next_player = Some(player.clone());
             }
-            let is_ready = self.players.len() <= self.get_num_players().end as usize && self.get_num_players().start as usize <= self.players.len();
             // Aggiungo il giocatore
             self.players.push(player.clone());
+            let is_ready = self.players.len() <= self.get_num_players().end as usize && self.get_num_players().start as usize <= self.players.len();
             let hand = Vec::new();
             self.in_hand.insert(player.clone(), hand);
             // Lo assegno ad un team
@@ -214,5 +199,30 @@ impl Game for Briscola {
     }
     fn get_players(&self) -> Vec<Player> {
         self.players.clone()
+    }
+    fn get_new_instance(&self) -> Box<dyn Game> {
+        Box::new(Self::default())
+    }
+}
+
+impl Default for Briscola {
+    fn default() -> Self {
+        let mut teams = Vec::new();
+        teams.push(Vec::new());
+        teams.push(Vec::new());
+        let mut wc = Vec::new();
+        wc.push(Vec::new());
+        wc.push(Vec::new());
+        Self {
+            table: Vec::new(),
+            players: Vec::new(),
+            in_hand: HashMap::new(),
+            teams: teams,
+            player_team: HashMap::new(),
+            won_cards: wc,
+            deck: vec![],
+            briscola: CardSuit::Coppe,
+            next_player: None,
+        }
     }
 }

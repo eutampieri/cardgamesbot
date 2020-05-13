@@ -55,9 +55,9 @@ pub enum GameStatus {
 
 pub type CardDeck = Vec<Card>;
 
-pub trait Game {
+pub trait Game: Send {
     /// Initialise the game (i.e. prepare the deck and so on)
-    fn init() -> Self where Self: Sized;
+    fn init(&mut self);
     /// Get the game's name
     fn get_name(&self) -> &str;
     /// Which set does the game use? Briscola or Poker?
@@ -75,16 +75,14 @@ pub trait Game {
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)>;
     fn get_status(&self) -> String;
     fn get_players(&self) -> Vec<Player>;
-    // fn get_new_instance(&self) -> Box<dyn Game> {
-    //     Box::new(Self::init())
-    // }
+    fn get_new_instance(&self) -> Box<dyn Game>;
 }
 
 pub type DispatchableStatus = (Player, GameStatus);
 
 impl GameStatus {
     /// This function routes the status to the right players
-    pub fn dispatch(&self, game: &impl Game) -> Vec<DispatchableStatus> {
+    pub fn dispatch(&self, game: &dyn Game) -> Vec<DispatchableStatus> {
         match self.clone() {
             // Messages for selected players
             // GameStatus::InProgress(p) => vec![(p, self.clone())],

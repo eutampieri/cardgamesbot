@@ -49,3 +49,7 @@ pub fn zero() -> fraction::Fraction {
 pub fn one() -> fraction::Fraction {
     fraction::Fraction::new(1u8, 1u8)
 }
+
+pub fn get_user_name(name: &str, surname: &Option<String>) -> String {
+    name.to_owned() + if surname.is_some(){" "} else {""} + &(surname.clone()).unwrap_or("".to_owned())
+}
