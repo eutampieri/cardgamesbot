@@ -18,6 +18,7 @@ pub struct Briscola {
     deck: CardDeck,
     briscola: CardSuit,
     next_player: Option<Player>,
+    started: bool,
 }
 
 impl Game for Briscola {
@@ -146,6 +147,9 @@ impl Game for Briscola {
         self.next_player.clone()
     }
     fn start(&mut self) -> GameStatus {
+        if self.started {
+            return GameStatus::InvalidMove("Il gioco è già iniziato, non puoi farlo reiniziare!");
+        }
         if self.players.len() == 3 {
             // FIXME controllare che non sia di briscola
             // Spostare il terzo giocatore in un team a se stante e togliere una carta
@@ -172,6 +176,7 @@ impl Game for Briscola {
             }
         }
         let player = self.players[0].clone();
+        self.started = true;
         GameStatus::WaitingForChoice(player.clone(), self.in_hand.get(&player).unwrap().clone())
     }
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)> {
@@ -224,6 +229,7 @@ impl Default for Briscola {
             deck: vec![],
             briscola: CardSuit::Coppe,
             next_player: None,
+            started: false,
         }
     }
 }
