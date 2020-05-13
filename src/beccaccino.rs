@@ -20,7 +20,6 @@ impl Beccaccino {
         }).unwrap();
         choosing_player
     }
-    fn handle_card(&mut self) {}
 }
 
 impl Game for Beccaccino {
