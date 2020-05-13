@@ -161,7 +161,7 @@ impl Game for Briscola {
             let moved_player = self.teams[1].pop().unwrap();
             self.teams[2].push(moved_player);
             self.player_team.remove(&self.teams[2][0].clone());
-            self.player_team.insert(self.teams[2][0].clone(), self.players.len() % 2);
+            self.player_team.insert(self.teams[2][0].clone(), 2);
         }
         // Scelgo la briscola
         self.briscola = self.deck.first().unwrap().1.clone();
