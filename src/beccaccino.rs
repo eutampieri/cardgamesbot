@@ -20,6 +20,7 @@ impl Beccaccino {
         }).unwrap();
         choosing_player
     }
+    fn handle_card(&mut self) {}
 }
 
 impl Game for Beccaccino {
@@ -170,7 +171,8 @@ impl Game for Beccaccino {
                         //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
                     }
                 }
-            } else {
+            }
+            if self.table.len() == 4 {
                 println!("cfgjvhkbjlnkmlmfhdxjckg");
                 // Se è il tavolo è pieno
                 // Calcolo il vincitore
