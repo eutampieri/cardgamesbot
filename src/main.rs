@@ -84,6 +84,9 @@ fn main() {
                                 };
                                 for i in status.iter().map(|x| x.dispatch(game)).collect::<Vec<Vec<primitives::DispatchableStatus>>>(){
                                     for j in i {
+                                        if let primitives::GameStatus::GameEnded = j.1 {
+                                            game_is_running = false;
+                                        }
                                         client.send_message(j);
                                     }
                                 }

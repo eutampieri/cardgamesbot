@@ -158,8 +158,9 @@ impl Game for Briscola {
             }
             self.teams.push(Vec::new());
             self.won_cards.push(Vec::new());
-            let moved_player = self.teams[0].pop().unwrap();
+            let moved_player = self.teams[1].pop().unwrap();
             self.teams[2].push(moved_player);
+            self.player_team.remove(&self.teams[2][0].clone());
             self.player_team.insert(self.teams[2][0].clone(), self.players.len() % 2);
         }
         // Scelgo la briscola

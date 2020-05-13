@@ -81,6 +81,7 @@ impl Game for Beccaccino {
         // Genero il mazzo e do le carte
         let deck = utils::random_deck(CardDeckType::Briscola);
         for i in 0..4 {
+            println!("{:?}", &deck[i*10..(i+1)*10]);
             self.in_hand[i].extend_from_slice(&deck[i*10..(i+1)*10]);
         }
         println!("{:?}", self);
@@ -141,12 +142,16 @@ impl Game for Beccaccino {
             let next_player_index = (player_index + 1) % 4;
             if self.table.len() == 0 {
                 // è la prima carta, salto le limitazioni del seme
+                let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                self.in_hand[player_index].remove(card_index);
                 self.table.push((by.clone(), card));
                 self.next_player = Some(next_player_index);
             } else if self.table.len() < 4 {
                 // Controllo il seme
                 if card.1 == (self.table[0].1).1 {
                     // Il seme è giusto, aggiungo
+                    let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                    self.in_hand[player_index].remove(card_index);    
                     self.table.push((by.clone(), card));
                     self.next_player = Some(next_player_index);
                     //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
@@ -159,11 +164,14 @@ impl Game for Beccaccino {
                             GameStatus::WaitingForChoice(by.clone(), self.in_hand[player_index].clone())
                         ];
                     } else {
+                        let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                        self.in_hand[player_index].remove(card_index);        
                         self.next_player = Some(next_player_index);
                         //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
                     }
                 }
             } else {
+                println!("cfgjvhkbjlnkmlmfhdxjckg");
                 // Se è il tavolo è pieno
                 // Calcolo il vincitore
                 let mut winner = (self.table[0]).clone().0;
