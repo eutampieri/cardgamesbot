@@ -57,7 +57,7 @@ pub type CardDeck = Vec<Card>;
 
 pub trait Game {
     /// Initialise the game (i.e. prepare the deck and so on)
-    fn init() -> Self;
+    fn init() -> Self where Self: Sized;
     /// Get the game's name
     fn get_name(&self) -> &str;
     /// Which set does the game use? Briscola or Poker?
@@ -67,14 +67,17 @@ pub trait Game {
     /// The implementor of the game logic
     fn handle_move(&mut self, by: &Player, card: Card) -> Vec<GameStatus>;
     /// The points associated to each card
-    fn get_card_rank(card: &CardType) -> fraction::Fraction;
-    fn get_card_sorting_rank(card: &CardType) -> u8;
+    fn get_card_rank(card: &CardType) -> fraction::Fraction where Self: Sized;
+    fn get_card_sorting_rank(card: &CardType) -> u8 where Self: Sized;
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str>;
     fn get_next_player(&self) -> Option<Player>;
     fn start(&mut self) -> GameStatus;
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)>;
     fn get_status(&self) -> String;
     fn get_players(&self) -> Vec<Player>;
+    // fn get_new_instance(&self) -> Box<dyn Game> {
+    //     Box::new(Self::init())
+    // }
 }
 
 pub type DispatchableStatus = (Player, GameStatus);

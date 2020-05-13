@@ -2,6 +2,8 @@ use std::env;
 use itertools::Itertools;
 use super::primitives;
 use super::utils;
+use serde::Deserialize;
+use primitives::Game;
 
 pub struct Button {
     pub id: String,
@@ -20,7 +22,7 @@ pub trait Message {
         res.push_str(pct_str::PctString::encode(self.get_text().chars(), pct_str::URIReserved).as_str());
         if let Some(kbd) = self.get_keyboard() {
             res.push_str("&reply_markup=");
-            let json = format!("\"inline_keyboard\"={{[{}]}}",
+            let json = format!("{{\"inline_keyboard\":[{}]}}",
                 kbd.iter()
                     .map(|x| format!("[{}]", x.iter()
                         .map(|y| format!("{{\"text\": \"{}\", \"callback_data\": \"{}\"}}", y.text, y.id))
@@ -32,9 +34,9 @@ pub trait Message {
         }
         res
     }
-    fn get_raw_for_edit(&self, id: String) -> String {
+    fn get_raw_for_edit(&self, id: i64) -> String {
         format!("message_id={}&{}",
-            pct_str::PctString::encode(id.chars(), pct_str::URIReserved).as_str(),
+            id,
             self.get_raw()
         )
     }
@@ -54,17 +56,38 @@ impl Telegram {
     }
 
     pub fn send_message(&self, message: impl Message) {
-        ureq::post(&format!("https://api.telegram.org/bot{}/sendMessage", self.token))
+        let res = ureq::post(&format!("https://api.telegram.org/bot{}/sendMessage", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
             .send_string(&message.get_raw());
+        println!("{} -> {:?}",message.get_raw(), res.into_string());
     }
 
-    pub fn edit_message(&self, message: impl Message, id: String) {
+    pub fn edit_message(&self, message: impl Message, id: i64) {
         ureq::post(&format!("https://api.telegram.org/bot{}/editMessageText", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
             .send_string(&message.get_raw_for_edit(id));
     }
-
+    pub fn get_updates(&mut self) -> Vec<telegram_bot_raw::types::update::Update> {
+        #[derive(Deserialize, Clone)]
+        struct Result {
+            result: Vec<telegram_bot_raw::types::update::Update>
+        }
+        let res = ureq::get(&format!(
+                "https://api.telegram.org/bot{}/getUpdates?timeout=60{}",
+                self.token,
+                if let Some(x) = self.last_id {
+                    format!("&offset={}", x+1)
+                } else { "".to_owned() }
+            ))
+            .timeout_read(70_000)
+            .call()
+            .into_string().unwrap();
+        let parsed: Result = serde_json::from_str(&res).unwrap();
+        if parsed.result.len() > 0 {
+            self.last_id = Some(parsed.clone().result.last().unwrap().id as u64);
+        }
+        parsed.result
+    }
 }
 
 /// This function converts a list of cards into an array of buttons
@@ -123,4 +146,47 @@ impl Message for primitives::DispatchableStatus {
     }
 }
 
-//impl Message for Vec<primitives::DispatchableStatus> {}
+impl Message for (&str, telegram_bot_raw::types::refs::UserId) {
+    fn get_chat_id(&self) -> i64 {
+        self.1.into()
+    }
+    fn get_text(&self) -> String {
+        self.0.to_owned()
+    }
+    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
+        None
+    }
+}
+impl Message for (String, telegram_bot_raw::types::refs::UserId) {
+    fn get_chat_id(&self) -> i64 {
+        self.1.into()
+    }
+    fn get_text(&self) -> String {
+        self.0.clone()
+    }
+    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
+        None
+    }
+}
+impl Message for (&str, telegram_bot_raw::types::refs::UserId, &Vec<Box<dyn Game>>) {
+    fn get_chat_id(&self) -> i64 {
+        self.1.into()
+    }
+    fn get_text(&self) -> String {
+        self.0.to_owned()
+    }
+    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
+        Some(self.2.iter().enumerate().map(|x| {
+            let range = x.1.get_num_players();
+            println!("{:?}", range);
+                vec![Button {
+                        id: format!("init_game:{}", x.0),
+                        text: format!("{} ({} giocatori)", x.1.get_name(), if range.start == range.end {
+                            format!("{}", range.start)
+                        } else {format!("{} - {}", range.start, range.end)})
+                    }
+                    ]
+                }
+            ).collect())
+    }
+}
