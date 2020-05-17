@@ -83,13 +83,13 @@ pub type DispatchableStatus = (Player, GameStatus);
 
 impl GameStatus {
     /// This function routes the status to the right players
-    pub fn dispatch(&self, game: &dyn Game) -> Vec<DispatchableStatus> {
+    pub fn dispatch(&self, game: &dyn Game) -> Vec<super::telegram::Message> {
         match self.clone() {
             // Messages for selected players
             // GameStatus::InProgress(p) => vec![(p, self.clone())],
-            GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone())],
-            GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone())],
-            GameStatus::NotifyUser(p, _) => vec![(p, self.clone())],
+            GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone()).into()],
+            GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone()).into()],
+            GameStatus::NotifyUser(p, _) => vec![(p, self.clone()).into()],
             GameStatus::WaitingForPlayers(_) => {
                 // This closure makes sure that only the game initiator
                 // gets the button to start the game.
@@ -98,13 +98,13 @@ impl GameStatus {
                 let mut players = game.get_players();
                 players.reverse();
                 let player = players.pop().unwrap();
-                let text = (player.clone(), self.clone()).get_text();
-                res.push((player, self.clone()));
-                res.append(&mut players.iter().map(|x| (x.clone(), GameStatus::NotifyUser(x.clone(), text.clone()))).collect());
+                let text = Message::from((player.clone(), self.clone())).text;
+                res.push((player, self.clone()).into());
+                res.append(&mut players.iter().map(|x| (x.clone(), GameStatus::NotifyUser(x.clone(), text.clone())).into()).collect());
                 res
             }
             // Everything else will sent to everybody in the game
-            _ => game.get_players().iter().map(|x| (x.clone(), self.clone())).collect::<Vec<DispatchableStatus>>()
+            _ => game.get_players().iter().map(|x| (x.clone(), self.clone()).into()).collect::<Vec<super::telegram::Message>>()
         }
     }
 }

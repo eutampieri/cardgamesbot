@@ -5,23 +5,27 @@ use super::utils;
 use serde::Deserialize;
 use primitives::Game;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Button {
     pub id: String,
     pub text: String,
 }
 
-pub trait Message {
-    fn get_chat_id(&self) -> i64;
-    fn get_text(&self) -> String;
-    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>>;
+#[derive(Clone, Debug)]
+pub struct Message {
+    pub chat_id: i64,
+    pub text: String,
+    pub keyboard: Option<Vec<Vec<Button>>>,
+}
+
+impl Message {
     fn get_raw(&self) -> String {
         let mut res = String::new();
         res.push_str("chat_id=");
-        res.push_str(pct_str::PctString::encode(format!("{}", self.get_chat_id()).chars(), pct_str::URIReserved).as_str());
+        res.push_str(pct_str::PctString::encode(format!("{}", self.chat_id).chars(), pct_str::URIReserved).as_str());
         res.push_str("&text=");
-        res.push_str(pct_str::PctString::encode(self.get_text().chars(), pct_str::URIReserved).as_str());
-        if let Some(kbd) = self.get_keyboard() {
+        res.push_str(pct_str::PctString::encode(self.text.chars(), pct_str::URIReserved).as_str());
+        if let Some(kbd) = &self.keyboard {
             res.push_str("&reply_markup=");
             let json = format!("{{\"inline_keyboard\":[{}]}}",
                 kbd.iter()
@@ -56,14 +60,14 @@ impl Telegram {
         }
     }
 
-    pub fn send_message(&self, message: impl Message) {
+    pub fn send_message(&self, message: Message) {
         let res = ureq::post(&format!("https://api.telegram.org/bot{}/sendMessage", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
             .send_string(&message.get_raw());
-        println!("{} -> {:?}",message.get_raw(), res.into_string());
+        //println!("{} -> {:?}",message.get_raw(), res.into_string());
     }
 
-    pub fn edit_message(&self, message: impl Message, id: i64) {
+    pub fn edit_message(&self, message: Message, id: i64) {
         ureq::post(&format!("https://api.telegram.org/bot{}/editMessageText", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
             .send_string(&message.get_raw_for_edit(id));
@@ -113,84 +117,82 @@ fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
     res
 }
 
-impl Message for primitives::DispatchableStatus {
-    fn get_chat_id(&self) -> i64 {
-        self.0.id
-    }
-    fn get_text(&self) -> String {
-        use primitives::GameStatus::*;
-        match self.1.clone() {
-            GameEnded => "La partita è finita!".to_owned(),
-            RoundWon(p) => format!("{} ha vinto questo round", p.name),
-            InProgress(p) => format!("Tocca a {}", p.name),
-            WaitingForPlayers(_) => format!("In attesa di giocatori..."),
-            WaitingForChoice(_, _) => "Scegli una carta:".to_owned(),
-            InvalidMove(msg) => format!("Questa mossa non è valida! {}", msg),
-            WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
-            GameReady => "La partita è pronta!".to_owned(),
-            NotifyUser(_, msg) => msg,
-            NotifyRoom(msg) => msg,
-            CardPlayed(p, c) => format!("{} ha giocato {}", p.name, utils::get_card_name(&c)),
-        }
-    }
-    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
-        use primitives::GameStatus::*;
-        match self.1.clone() {
-            WaitingForPlayers(ready) => {
-                if ready {
-                    Some(vec![vec![Button{id: "start".to_owned(), text: "Avvia partita".to_owned()}]])
-                } else {
-                    None
+impl From<primitives::DispatchableStatus> for Message {
+    fn from(status: primitives::DispatchableStatus) -> Self {
+        Self{
+            chat_id: status.0.id,
+            text: {
+                use primitives::GameStatus::*;
+                match status.1.clone() {
+                    GameEnded => "La partita è finita!".to_owned(),
+                    RoundWon(p) => format!("{} ha vinto questo round", p.name),
+                    InProgress(p) => format!("Tocca a {}", p.name),
+                    WaitingForPlayers(_) => format!("In attesa di giocatori..."),
+                    WaitingForChoice(_, _) => "Scegli una carta:".to_owned(),
+                    InvalidMove(msg) => format!("Questa mossa non è valida! {}", msg),
+                    WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
+                    GameReady => "La partita è pronta!".to_owned(),
+                    NotifyUser(_, msg) => msg,
+                    NotifyRoom(msg) => msg,
+                    CardPlayed(p, c) => format!("{} ha giocato {}", p.name, utils::get_card_name(&c)),
                 }
             },
-            WaitingForChoice(_, cards) => Some(deck_of_buttons(cards)),
-            WaitingForChoiceCustomMessage(_, cards, _) => Some(deck_of_buttons(cards)),
-            _ => None
+            keyboard: {
+                use primitives::GameStatus::*;
+                match status.1.clone() {
+                    WaitingForPlayers(ready) => {
+                        if ready {
+                            Some(vec![vec![Button{id: "start".to_owned(), text: "Avvia partita".to_owned()}]])
+                        } else {
+                            None
+                        }
+                    },
+                    WaitingForChoice(_, cards) => Some(deck_of_buttons(cards)),
+                    WaitingForChoiceCustomMessage(_, cards, _) => Some(deck_of_buttons(cards)),
+                    _ => None
+                }
+            },
         }
     }
 }
 
-impl Message for (&str, telegram_bot_raw::types::refs::UserId) {
-    fn get_chat_id(&self) -> i64 {
-        self.1.into()
-    }
-    fn get_text(&self) -> String {
-        self.0.to_owned()
-    }
-    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
-        None
+impl From<(&str, telegram_bot_raw::types::refs::UserId)> for Message {
+    fn from(tuple: (&str, telegram_bot_raw::types::refs::UserId)) -> Self {
+        Self {
+            chat_id: tuple.1.into(),
+            text: tuple.0.to_owned(),
+            keyboard: None,
+        }
     }
 }
-impl Message for (String, telegram_bot_raw::types::refs::UserId) {
-    fn get_chat_id(&self) -> i64 {
-        self.1.into()
-    }
-    fn get_text(&self) -> String {
-        self.0.clone()
-    }
-    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
-        None
+impl From<(String, telegram_bot_raw::types::refs::UserId)> for Message {
+    fn from(tuple: (String, telegram_bot_raw::types::refs::UserId)) -> Self {
+        Self{
+            chat_id: tuple.1.into(),
+            text: tuple.0.clone(),
+            keyboard: None,
+        }
     }
 }
-impl Message for (&str, telegram_bot_raw::types::refs::UserId, &Vec<Box<dyn Game>>) {
-    fn get_chat_id(&self) -> i64 {
-        self.1.into()
-    }
-    fn get_text(&self) -> String {
-        self.0.to_owned()
-    }
-    fn get_keyboard(&self) -> Option<Vec<Vec<Button>>> {
-        Some(self.2.iter().enumerate().map(|x| {
-            let range = x.1.get_num_players();
-            println!("{:?}", range);
-                vec![Button {
-                        id: format!("init_game:{}", x.0),
-                        text: format!("{} ({} giocatori)", x.1.get_name(), if range.start == range.end {
-                            format!("{}", range.start)
-                        } else {format!("{} - {}", range.start, range.end)})
-                    }
-                    ]
-                }
-            ).collect())
+impl From<(&str, telegram_bot_raw::types::refs::UserId, &Vec<Box<dyn Game>>)> for Message {
+    fn from(tuple: (&str, telegram_bot_raw::types::refs::UserId, &Vec<Box<dyn Game>>)) -> Self {
+        Self{
+            chat_id: tuple.1.into(),
+            text: tuple.0.to_owned(),
+            keyboard: {
+                Some(tuple.2.iter().enumerate().map(|x| {
+                    let range = x.1.get_num_players();
+                    println!("{:?}", range);
+                        vec![Button {
+                                id: format!("init_game:{}", x.0),
+                                text: format!("{} ({} giocatori)", x.1.get_name(), if range.start == range.end {
+                                    format!("{}", range.start)
+                                } else {format!("{} - {}", range.start, range.end)})
+                            }
+                            ]
+                        }
+                    ).collect())
+            }
+        }
     }
 }

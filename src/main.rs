@@ -37,15 +37,15 @@ fn main() {
                     if data.contains("/start") {
                         let pieces: Vec<String> = data.split(" ").map(|x| x.to_owned()).collect();
                         if pieces.len() == 1 {
-                            client.send_message(("Ciao! A che gioco vuoi giocare?", msg.from.id, &playable_games));
+                            client.send_message(("Ciao! A che gioco vuoi giocare?", msg.from.id, &playable_games).into());
                         } else {
                             let game_id = pieces[1].clone();
-                            client.send_message(("Provo ad aggiungerti alla partita...", msg.from.id));
+                            client.send_message(("Provo ad aggiungerti alla partita...", msg.from.id).into());
                             player_games.insert(msg.from.id, game_id.clone());
                             if let Some(ch) = game_channel.get(&game_id) {
                                 ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: msg.from.id.into(), name: utils::get_user_name(&msg.from.first_name, &msg.from.last_name)})).unwrap();
                             } else {
-                                client.send_message(("Gioco non trovato!", msg.from.id))
+                                client.send_message(("Gioco non trovato!", msg.from.id).into())
                             }
                         }
                     } else {
@@ -70,7 +70,7 @@ fn main() {
                         player_games.insert(qry.from.id, game_id.clone());
                         game_channel.insert(game_id.clone(), sender);
                         game_last_played.insert(game_id.clone(), std::time::Instant::now());
-                        client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), qry.from.id));
+                        client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), qry.from.id).into());
                         std::thread::spawn(move || {
                             let client = telegram::Telegram::init();
                             let game = game;
@@ -91,13 +91,13 @@ fn main() {
                                     },
                                     ThreadMessage::Ping => {vec![]},
                                 };
-                                for i in status.iter().map(|x| x.dispatch(game)).collect::<Vec<Vec<primitives::DispatchableStatus>>>(){
-                                    for j in i {
-                                        if let primitives::GameStatus::GameEnded = j.1 {
-                                            game_is_running = false;
-                                        }
-                                        client.send_message(j);
+                                for status in &status {
+                                    if let primitives::GameStatus::GameEnded = status {
+                                        game_is_running = false;
                                     }
+                                }
+                                for i in utils::compact_messages(status.iter().map(|x| x.dispatch(game)).flatten().collect::<Vec<telegram::Message>>()) {
+                                    client.send_message(i);
                                 }
                             }
                         });
@@ -111,7 +111,7 @@ fn main() {
                             let channel = game_channel.get(game_id).unwrap();
                             channel.send(ThreadMessage::Start).expect("Could not start game");
                         } else {
-                            client.send_message(("Gioco non trovato", player_id));
+                            client.send_message(("Gioco non trovato", player_id).into());
                         }
                     },
                     "handle_move" => {
@@ -124,7 +124,7 @@ fn main() {
                             let channel = game_channel.get(game_id).unwrap();
                             channel.send(ThreadMessage::HandleMove(primitives::Player{id: qry.from.id.into(), name: utils::get_user_name(&qry.from.first_name, &qry.from.last_name)}, card)).expect("Could not handle move");
                         } else {
-                            client.send_message(("Gioco non trovato", player_id));
+                            client.send_message(("Gioco non trovato", player_id).into());
                         }
                     }
                     _ => {}
