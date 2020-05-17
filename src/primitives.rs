@@ -90,6 +90,19 @@ impl GameStatus {
             GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone())],
             GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone())],
             GameStatus::NotifyUser(p, _) => vec![(p, self.clone())],
+            GameStatus::WaitingForPlayers(_) => {
+                // This closure makes sure that only the game initiator
+                // gets the button to start the game.
+                use super::telegram::Message;
+                let mut res = vec![];
+                let mut players = game.get_players();
+                players.reverse();
+                let player = players.pop().unwrap();
+                let text = (player.clone(), self.clone()).get_text();
+                res.push((player, self.clone()));
+                res.append(&mut players.iter().map(|x| (x.clone(), GameStatus::NotifyUser(x.clone(), text.clone()))).collect());
+                res
+            }
             // Everything else will sent to everybody in the game
             _ => game.get_players().iter().map(|x| (x.clone(), self.clone())).collect::<Vec<DispatchableStatus>>()
         }
