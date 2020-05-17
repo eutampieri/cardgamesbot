@@ -9,11 +9,16 @@ use primitives::Game;
 use std::sync::mpsc;
 use std::collections::HashMap;
 
+// A game can last up to 10 minutes since the last action
+static MAX_GAME_DURATION: u64 = 600;
+
 fn main() {
     // Data storage
     // Association between players and their respective games
     let mut player_games: HashMap<telegram_bot_raw::types::refs::UserId, String> = HashMap::new();
     let mut game_channel: HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>> = HashMap::new();
+    let mut game_last_played: HashMap<String, std::time::Instant> = HashMap::new();
+    let mut cleanup_list: Vec<String> = Vec::new();
     
     let mut playable_games: Vec<Box<dyn Game>> = Vec::new();
     // List of playable games
@@ -64,6 +69,7 @@ fn main() {
                         sender.send(ThreadMessage::AddPlayer(primitives::Player{id: qry.from.id.into(), name: utils::get_user_name(&qry.from.first_name, &qry.from.last_name)})).unwrap();
                         player_games.insert(qry.from.id, game_id.clone());
                         game_channel.insert(game_id.clone(), sender);
+                        game_last_played.insert(game_id.clone(), std::time::Instant::now());
                         client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), qry.from.id));
                         std::thread::spawn(move || {
                             let client = telegram::Telegram::init();
@@ -72,7 +78,6 @@ fn main() {
                             let mut game_is_running = true;
                             while game_is_running {
                                 let message = reciever.recv().unwrap();
-                                println!("Il thread ha ricevuto un messaggio");
                                 let status = match message {
                                     ThreadMessage::AddPlayer(p) => vec![game.add_player(p.clone()).unwrap_or_else(|x| primitives::GameStatus::NotifyUser(p, x.to_owned()))],
                                     ThreadMessage::Start => vec![game.start(), primitives::GameStatus::NotifyRoom(game.get_status())],
@@ -81,6 +86,10 @@ fn main() {
                                         tmp.push(primitives::GameStatus::NotifyRoom(game.get_status()));
                                         tmp
                                     },
+                                    ThreadMessage::Kill => {
+                                        break;
+                                    },
+                                    ThreadMessage::Ping => {vec![]},
                                 };
                                 for i in status.iter().map(|x| x.dispatch(game)).collect::<Vec<Vec<primitives::DispatchableStatus>>>(){
                                     for j in i {
@@ -96,6 +105,9 @@ fn main() {
                     "start" => {
                         let player_id = qry.from.id;
                         if let Some(game_id) = player_games.get(&player_id) {
+                            if let Some(inst) = game_last_played.get_mut(game_id) {
+                                *inst = std::time::Instant::now();
+                            }
                             let channel = game_channel.get(game_id).unwrap();
                             channel.send(ThreadMessage::Start).expect("Could not start game");
                         } else {
@@ -106,6 +118,9 @@ fn main() {
                         let card: primitives::Card = bincode::deserialize(&base64::decode(&data[1]).unwrap()).unwrap();
                         let player_id = qry.from.id;
                         if let Some(game_id) = player_games.get(&player_id) {
+                            if let Some(inst) = game_last_played.get_mut(game_id) {
+                                *inst = std::time::Instant::now();
+                            }
                             let channel = game_channel.get(game_id).unwrap();
                             channel.send(ThreadMessage::HandleMove(primitives::Player{id: qry.from.id.into(), name: utils::get_user_name(&qry.from.first_name, &qry.from.last_name)}, card)).expect("Could not handle move");
                         } else {
@@ -116,5 +131,33 @@ fn main() {
                 }
             }
         }
+        // Now check if there are games which need to be terminated
+        for (game, time) in game_last_played.iter() {
+            if time.elapsed().as_secs() > MAX_GAME_DURATION {
+                let channel = game_channel.get(game).unwrap();
+                channel.send(threading::ThreadMessage::Kill).unwrap_or_default();
+            }
+        }
+        // Cleanup of dead games
+        for (game, channel) in game_channel.iter() {
+            if channel.send(threading::ThreadMessage::Ping).is_err() {
+                // If the game is dead, the channel can't send the message
+                cleanup_list.push(game.clone());
+            }
+        }
+        // Deassosciate the game
+        player_games = player_games.iter()
+            .filter(|x| cleanup_list.iter().position(|y| y==x.1).is_none())
+            .map(|x| (x.0.clone(), x.1.clone()))
+            .collect();
+        game_channel = game_channel.iter()
+            .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
+            .map(|x| (x.0.clone(), x.1.clone()))
+            .collect();
+        game_last_played = game_last_played.iter()
+            .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
+            .map(|x| (x.0.clone(), x.1.clone()))
+            .collect();
+        cleanup_list.clear();
     }
 }
