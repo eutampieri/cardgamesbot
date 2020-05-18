@@ -65,7 +65,6 @@ pub fn compact_messages(list: Vec<Message>) -> Vec<Message> {
         let v = map.get_mut(&message.chat_id).unwrap();
         v.push(message.clone());
     }
-    println!("{:?}", map);
     map.iter()
         .map(|x| {
             let concatenated_text = x.1.iter()

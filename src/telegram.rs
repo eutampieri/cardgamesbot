@@ -47,6 +47,7 @@ impl Message {
     }
 }
 
+#[derive(Clone)]
 pub struct Telegram {
     token: String,
     last_id: Option<u64>,
@@ -64,7 +65,6 @@ impl Telegram {
         let res = ureq::post(&format!("https://api.telegram.org/bot{}/sendMessage", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
             .send_string(&message.get_raw());
-        //println!("{} -> {:?}",message.get_raw(), res.into_string());
     }
 
     pub fn edit_message(&self, message: Message, id: i64) {
@@ -113,7 +113,6 @@ fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
         //I'm serializing cards to deserialize later -----------------------|
         });
     }
-    println!("{:?}", res);
     res
 }
 
@@ -182,7 +181,6 @@ impl From<(&str, telegram_bot_raw::types::refs::UserId, &Vec<Box<dyn Game>>)> fo
             keyboard: {
                 Some(tuple.2.iter().enumerate().map(|x| {
                     let range = x.1.get_num_players();
-                    println!("{:?}", range);
                         vec![Button {
                                 id: format!("init_game:{}", x.0),
                                 text: format!("{} ({} giocatori)", x.1.get_name(), if range.start == range.end {

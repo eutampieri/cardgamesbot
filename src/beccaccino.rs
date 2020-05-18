@@ -85,10 +85,8 @@ impl Game for Beccaccino {
         // Genero il mazzo e do le carte
         let deck = utils::random_deck(CardDeckType::Briscola);
         for i in 0..4 {
-            println!("{:?}", &deck[i*10..(i+1)*10]);
             self.in_hand[i].extend_from_slice(&deck[i*10..(i+1)*10]);
         }
-        println!("{:?}", self);
         // Determino chi ha la briscola
         let choosing_player = self.get_choosing_player();
         self.next_player = Some(choosing_player);
@@ -176,7 +174,6 @@ impl Game for Beccaccino {
                 }
             }
             if self.table.len() == 4 {
-                println!("cfgjvhkbjlnkmlmfhdxjckg");
                 // Se è il tavolo è pieno
                 // Calcolo il vincitore
                 let mut winner = (self.table[0]).clone().0;

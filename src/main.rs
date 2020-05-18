@@ -63,7 +63,6 @@ fn main() {
             }  else if let UpdateKind::CallbackQuery(qry) = update.kind {
                 use threading::*;
                 let data: Vec<String> = qry.data.unwrap().split(":").map(|x| x.to_owned()).collect();
-                println!("{:?}", data);
                 let command = data[0].as_str();
                 match command {
                     "init_game" => {
@@ -77,8 +76,9 @@ fn main() {
                         game_channel.insert(game_id.clone(), sender);
                         game_last_played.insert(game_id.clone(), std::time::Instant::now());
                         client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), qry.from.id).into());
+                        let game_tg_client = client.clone();
                         std::thread::spawn(move || {
-                            let client = telegram::Telegram::init();
+                            let client = game_tg_client;
                             let game = game;
                             game.init();
                             let mut game_is_running = true;
