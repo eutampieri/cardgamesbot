@@ -61,16 +61,24 @@ impl Telegram {
         }
     }
 
-    pub fn send_message(&self, message: Message) {
+    pub fn send_message(&self, message: Message) -> i64{
+        #[derive(Deserialize, Debug)]
+        struct Response {
+            ok: bool,
+            result: telegram_bot_raw::types::message::RawMessage,
+        }
         let res = ureq::post(&format!("https://api.telegram.org/bot{}/sendMessage", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
-            .send_string(&message.get_raw());
+            .send_string(&message.get_raw()).into_string().unwrap();
+        let parsed: Response = serde_json::from_str(&res).unwrap();
+        parsed.result.message_id
     }
 
-    pub fn edit_message(&self, message: Message, id: i64) {
-        ureq::post(&format!("https://api.telegram.org/bot{}/editMessageText", self.token))
+    pub fn edit_message(&self, message: Message, id: i64) -> i64 {
+        ureq::post(&format!("https://api.telegram.org/bot{}/deleteMessage", self.token))
             .set("Content-Type", "application/x-www-form-urlencoded")
-            .send_string(&message.get_raw_for_edit(id));
+            .send_string(&format!("chat_id={}&message_id={}", message.chat_id, id));
+        self.send_message(message)
     }
     pub fn get_updates(&mut self) -> Vec<telegram_bot_raw::types::update::Update> {
         #[derive(Deserialize, Clone)]
@@ -92,6 +100,11 @@ impl Telegram {
             self.last_id = Some(parsed.clone().result.last().unwrap().id as u64);
         }
         parsed.result
+    }
+    pub fn ack_callback_query(&self, qry_id: &str) {
+        ureq::post(&format!("https://api.telegram.org/bot{}/editMessageText", self.token))
+            .set("Content-Type", "application/x-www-form-urlencoded")
+            .send_string(&format!("callback_query_id={}&show_alert=true", qry_id));
     }
 }
 

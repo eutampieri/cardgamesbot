@@ -44,13 +44,13 @@ fn main() {
                             // Check wether the user is already playing a game
                             if player_games.contains_key(&msg.from.id) {
                                 // The user can't join two games at the same time
-                                client.send_message(("Non puoi unirti a più partite contemporaneamente", msg.from.id).into())
+                                client.send_message(("Non puoi unirti a più partite contemporaneamente", msg.from.id).into());
                             } else {
-                                player_games.insert(msg.from.id, game_id.clone());
                                 if let Some(ch) = game_channel.get(&game_id) {
+                                    player_games.insert(msg.from.id, game_id.clone());
                                     ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: msg.from.id.into(), name: utils::get_user_name(&msg.from.first_name, &msg.from.last_name)})).unwrap();
                                 } else {
-                                    client.send_message(("Gioco non trovato!", msg.from.id).into())
+                                    client.send_message(("Gioco non trovato!", msg.from.id).into());
                                 }
                             }
                         }
@@ -62,6 +62,8 @@ fn main() {
                 } // ignoring other message kinds since they're useless for us
             }  else if let UpdateKind::CallbackQuery(qry) = update.kind {
                 use threading::*;
+                //let qry_id: String = qry.id.into;
+                //client.ack_callback_query(&format!("{}", qry.id));
                 let data: Vec<String> = qry.data.unwrap().split(":").map(|x| x.to_owned()).collect();
                 let command = data[0].as_str();
                 match command {
@@ -78,6 +80,7 @@ fn main() {
                         client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), qry.from.id).into());
                         let game_tg_client = client.clone();
                         std::thread::spawn(move || {
+                            let mut message_list: HashMap<i64, i64> = HashMap::new();
                             let client = game_tg_client;
                             let game = game;
                             game.init();
@@ -96,6 +99,7 @@ fn main() {
                                         break;
                                     },
                                     ThreadMessage::Ping => {vec![]},
+                                    ThreadMessage::AboutToKill => {vec![primitives::GameStatus::NotifyRoom("Questo gioco sarà terminto per inattività a breve!".to_owned())]},
                                 };
                                 for status in &status {
                                     if let primitives::GameStatus::GameEnded = status {
@@ -103,7 +107,14 @@ fn main() {
                                     }
                                 }
                                 for i in utils::compact_messages(status.iter().map(|x| x.dispatch(game)).flatten().collect::<Vec<telegram::Message>>()) {
-                                    client.send_message(i);
+                                    match message_list.get_mut(&i.chat_id) {
+                                        Some(msg_id) => *msg_id = client.edit_message(i, *msg_id),
+                                        None => {
+                                            let user_id = i.chat_id;
+                                            let msg_id = client.send_message(i);
+                                            message_list.insert(user_id, msg_id);
+                                        }
+                                    }
                                 }
                             }
                         });
@@ -142,6 +153,9 @@ fn main() {
             if time.elapsed().as_secs() > MAX_GAME_DURATION {
                 let channel = game_channel.get(game).unwrap();
                 channel.send(threading::ThreadMessage::Kill).unwrap_or_default();
+            } else if time.elapsed().as_secs() > (MAX_GAME_DURATION as f64 * 0.9) as u64 {
+                let channel = game_channel.get(game).unwrap();
+                channel.send(threading::ThreadMessage::AboutToKill).unwrap_or_default();
             }
         }
         // Cleanup of dead games

@@ -5,4 +5,5 @@ pub enum ThreadMessage {
     Start,
     Kill,
     Ping,
+    AboutToKill,
 }
