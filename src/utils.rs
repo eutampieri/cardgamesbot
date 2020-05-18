@@ -57,14 +57,12 @@ pub fn get_user_name(name: &str, surname: &Option<String>) -> String {
 }
 
 pub fn compact_messages(list: Vec<Message>) -> Vec<Message> {
-    println!("FUNC CALL!!");
-    let mut map: HashMap<String, Vec<Message>> = HashMap::new();
+    let mut map: HashMap<i64, Vec<Message>> = HashMap::new();
     for message in list {
-        if map.get(&format!("{}", message.chat_id)).is_none() {
-            println!("NEW USER {}", message.chat_id);
-            map.insert(format!("{}", message.chat_id), vec![]);
+        if map.get(&message.chat_id).is_none() {
+            map.insert(message.chat_id, vec![]);
         }
-        let v = map.get_mut(&format!("{}", message.chat_id)).unwrap();
+        let v = map.get_mut(&message.chat_id).unwrap();
         v.push(message.clone());
     }
     println!("{:?}", map);
@@ -88,7 +86,7 @@ pub fn compact_messages(list: Vec<Message>) -> Vec<Message> {
                 }
                 keyboard = Some(tmp_keyboard);
             }
-            Message{chat_id: (x.0.parse::<i64>().unwrap()), text: concatenated_text, keyboard: keyboard}
+            Message{chat_id: *(x.0), text: concatenated_text, keyboard: keyboard}
         })
         .collect()
 }

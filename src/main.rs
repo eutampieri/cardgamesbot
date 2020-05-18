@@ -41,11 +41,17 @@ fn main() {
                         } else {
                             let game_id = pieces[1].clone();
                             client.send_message(("Provo ad aggiungerti alla partita...", msg.from.id).into());
-                            player_games.insert(msg.from.id, game_id.clone());
-                            if let Some(ch) = game_channel.get(&game_id) {
-                                ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: msg.from.id.into(), name: utils::get_user_name(&msg.from.first_name, &msg.from.last_name)})).unwrap();
+                            // Check wether the user is already playing a game
+                            if player_games.contains_key(&msg.from.id) {
+                                // The user can't join two games at the same time
+                                client.send_message(("Non puoi unirti a più partite contemporaneamente", msg.from.id).into())
                             } else {
-                                client.send_message(("Gioco non trovato!", msg.from.id).into())
+                                player_games.insert(msg.from.id, game_id.clone());
+                                if let Some(ch) = game_channel.get(&game_id) {
+                                    ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: msg.from.id.into(), name: utils::get_user_name(&msg.from.first_name, &msg.from.last_name)})).unwrap();
+                                } else {
+                                    client.send_message(("Gioco non trovato!", msg.from.id).into())
+                                }
                             }
                         }
                     } else {
