@@ -27,7 +27,7 @@ pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &V
                     break;
                 },
                 ThreadMessage::Ping => {vec![]},
-                ThreadMessage::AboutToKill => {vec![primitives::GameStatus::NotifyRoom("Questo gioco sarà terminto per inattività a breve!".to_owned())]},
+                ThreadMessage::AboutToKill => {vec![primitives::GameStatus::NotifyRoom("Questo gioco sarà terminato per inattività a breve!".to_owned())]},
             };
             for status in &status {
                 if let primitives::GameStatus::GameEnded = status {
