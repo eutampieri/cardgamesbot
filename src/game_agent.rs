@@ -14,7 +14,7 @@ pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &V
         game.init();
         let mut game_is_running = true;
         while game_is_running {
-            let message = reciever.recv().unwrap();
+            let message = receiver.recv().unwrap();
             let status = match message {
                 ThreadMessage::AddPlayer(p) => vec![game.add_player(p.clone()).unwrap_or_else(|x| primitives::GameStatus::NotifyUser(p, x.to_owned()))],
                 ThreadMessage::Start => vec![game.start(), primitives::GameStatus::NotifyRoom(game.get_status())],
