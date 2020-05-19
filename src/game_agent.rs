@@ -5,7 +5,7 @@ use super::utils;
 use super::telegram::{Telegram, Message};
 use primitives::Game;
 
-pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &Vec<Box<dyn Game>>, reciever: std::sync::mpsc::Receiver<ThreadMessage>) {
+pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &Vec<Box<dyn Game>>, receiver: std::sync::mpsc::Receiver<ThreadMessage>) {
     let game = Box::leak(playable_games[game_index].get_new_instance());
     std::thread::spawn(move || {
         let mut message_list: HashMap<i64, i64> = HashMap::new();
