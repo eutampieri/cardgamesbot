@@ -104,10 +104,10 @@ impl Game for Briscola {
             self.won_cards[*self.player_team.get(&winner).unwrap()].append(&mut self.table.iter().map(|x| x.1.clone()).collect());
             self.table.clear(); // Just in case...
             if self.deck.len() >= self.players.len() {
-                for player in &self.players {
-                        // FIXME dare le carte in ordine giusto in base alla vittoria
-                        self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
-                    }
+                for i in 0..self.players.len(){
+                    let receiving_player_position = (i + self.players.iter().position(|x| x == &winner).unwrap()) % self.players.len();
+                    self.in_hand.get_mut(&self.players[receiving_player_position]).unwrap().push(self.deck.pop().unwrap());
+                }
             }
             self.next_player = Some(winner.clone());
             let game_ended = self.in_hand.iter().map(|x| x.1.len()).max().unwrap() == 0;

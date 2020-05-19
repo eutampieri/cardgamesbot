@@ -23,10 +23,10 @@ pub enum CardSuit {
 impl From<&CardSuit> for String {
     fn from(s: &CardSuit) -> Self {
         match s {
-            CardSuit::Bastoni => "Bastoni",
-            CardSuit::Spade => "Spade",
-            CardSuit::Coppe => "Coppe",
-            CardSuit::Denari => "Denari"
+            CardSuit::Bastoni => "🥢",
+            CardSuit::Spade => "🗡 ",
+            CardSuit::Coppe => "🏆",
+            CardSuit::Denari => "💰"
         }.to_owned()
     }
 }
