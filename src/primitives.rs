@@ -56,7 +56,7 @@ pub enum GameStatus {
 pub type CardDeck = Vec<Card>;
 
 pub trait Game: Send {
-    /// Initialise the game (i.e. prepare the deck and so on)
+    /// Reinitialise the game (i.e. prepare the deck and so on) after a default instance has been cloned
     fn init(&mut self);
     /// Get the game's name
     fn get_name(&self) -> &str;
