@@ -127,6 +127,50 @@ fn handle_update(
     }
 }
 
+fn handle_game_termination(
+    game_last_played: &HashMap<String, std::time::Instant>,
+    game_channel: &HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>
+) {
+    for (game, time) in game_last_played.iter() {
+        if time.elapsed().as_secs() > MAX_GAME_DURATION {
+            let channel = game_channel.get(game).unwrap();
+            channel.send(threading::ThreadMessage::Kill).unwrap_or_default();
+        } else if time.elapsed().as_secs() > (MAX_GAME_DURATION as f64 * 0.9) as u64 {
+            let channel = game_channel.get(game).unwrap();
+            channel.send(threading::ThreadMessage::AboutToKill).unwrap_or_default();
+        }
+    }
+}
+fn get_dead_games(game_channel: &HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>) -> Vec<String> {
+    let mut cleanup_list: Vec<String> = Vec::new();
+    for (game, channel) in game_channel.iter() {
+        if channel.send(threading::ThreadMessage::Ping).is_err() {
+            // If the game is dead, the channel can't send the message
+            cleanup_list.push(game.clone());
+        }
+    }
+    cleanup_list
+}
+fn purge_dead_games(
+    cleanup_list: Vec<String>,
+    player_games: &mut HashMap<telegram_bot_raw::types::refs::UserId, String>,
+    game_channel: &mut HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>,
+    game_last_played: &mut HashMap<String, std::time::Instant>
+ ) {
+    *player_games = player_games.iter()
+        .filter(|x| cleanup_list.iter().position(|y| y==x.1).is_none())
+        .map(|x| (x.0.clone(), x.1.clone()))
+        .collect();
+    *game_channel = game_channel.iter()
+        .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
+        .map(|x| (x.0.clone(), x.1.clone()))
+        .collect();
+    *game_last_played = game_last_played.iter()
+        .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
+        .map(|x| (x.0.clone(), x.1.clone()))
+        .collect();
+}
+
 pub fn main_bot_logic(
     playable_games: &Vec<Box<dyn Game>>,
     player_games: &mut HashMap<telegram_bot_raw::types::refs::UserId, String>,
@@ -134,42 +178,12 @@ pub fn main_bot_logic(
     game_last_played: &mut HashMap<String, std::time::Instant>,
     client: &mut Telegram
 ) {
-    let mut cleanup_list: Vec<String> = Vec::new();
     loop {
         for update in client.get_updates() {
             handle_update(update, playable_games, player_games, game_channel, game_last_played, client);
+            handle_game_termination(game_last_played, game_channel);
+            purge_dead_games(get_dead_games(game_channel), player_games, game_channel, game_last_played);
         }
-        // Now check if there are games which need to be terminated
-        for (game, time) in game_last_played.iter() {
-            if time.elapsed().as_secs() > MAX_GAME_DURATION {
-                let channel = game_channel.get(game).unwrap();
-                channel.send(threading::ThreadMessage::Kill).unwrap_or_default();
-            } else if time.elapsed().as_secs() > (MAX_GAME_DURATION as f64 * 0.9) as u64 {
-                let channel = game_channel.get(game).unwrap();
-                channel.send(threading::ThreadMessage::AboutToKill).unwrap_or_default();
-            }
-        }
-        // Cleanup of dead games
-        for (game, channel) in game_channel.iter() {
-            if channel.send(threading::ThreadMessage::Ping).is_err() {
-                // If the game is dead, the channel can't send the message
-                cleanup_list.push(game.clone());
-            }
-        }
-        // Deassosciate the game
-        *player_games = player_games.iter()
-            .filter(|x| cleanup_list.iter().position(|y| y==x.1).is_none())
-            .map(|x| (x.0.clone(), x.1.clone()))
-            .collect();
-        *game_channel = game_channel.iter()
-            .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
-            .map(|x| (x.0.clone(), x.1.clone()))
-            .collect();
-        *game_last_played = game_last_played.iter()
-            .filter(|x| cleanup_list.iter().position(|y| y==x.0).is_none())
-            .map(|x| (x.0.clone(), x.1.clone()))
-            .collect();
-        cleanup_list.clear();
     }
 
 }
