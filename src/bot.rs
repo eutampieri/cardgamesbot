@@ -16,13 +16,11 @@ fn add_player_to_game(
     if player_games.contains_key(&from.id) {
         // The user can't join two games at the same time
         client.send_message(("Non puoi unirti a più partite contemporaneamente", from.id).into());
+    } else if let Some(ch) = game_channel.get(&game_id) {
+        player_games.insert(from.id, game_id.clone());
+        ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
     } else {
-        if let Some(ch) = game_channel.get(&game_id) {
-            player_games.insert(from.id, game_id.clone());
-            ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
-        } else {
-            client.send_message(("Gioco non trovato!", from.id).into());
-        }
+        client.send_message(("Gioco non trovato!", from.id).into());
     }
 }
 
@@ -92,7 +90,6 @@ fn handle_callback_query(
     game_last_played: &mut HashMap<String, std::time::Instant>,
     client: &mut Telegram
 ) {
-    use threading::*;
     //let qry_id: String = qry.id.into;
     //client.ack_callback_query(&format!("{}", qry.id));
     let data: Vec<String> = qry.data.unwrap().split(":").map(|x| x.to_owned()).collect();

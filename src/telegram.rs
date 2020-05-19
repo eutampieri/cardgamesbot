@@ -39,12 +39,6 @@ impl Message {
         }
         res
     }
-    fn get_raw_for_edit(&self, id: i64) -> String {
-        format!("message_id={}&{}",
-            id,
-            self.get_raw()
-        )
-    }
 }
 
 #[derive(Clone)]
@@ -143,7 +137,6 @@ impl From<primitives::DispatchableStatus> for Message {
                     WaitingForChoice(_, _) => "Scegli una carta:".to_owned(),
                     InvalidMove(msg) => format!("Questa mossa non è valida! {}", msg),
                     WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
-                    GameReady => "La partita è pronta!".to_owned(),
                     NotifyUser(_, msg) => msg,
                     NotifyRoom(msg) => msg,
                     CardPlayed(p, c) => format!("{} ha giocato {}", p.name, utils::get_card_name(&c)),

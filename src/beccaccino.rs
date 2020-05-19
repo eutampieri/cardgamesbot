@@ -15,10 +15,9 @@ pub struct Beccaccino {
 impl Beccaccino {
     /// WHo's got the 4 of denara? Well, he's to choose the briscola!!
     fn get_choosing_player(&self) -> usize {
-        let choosing_player = self.in_hand.iter().position(|x| {
-            x.iter().position(|y| y == &(CardType::Numeric(4), CardSuit::Denari)).is_some()
-        }).unwrap();
-        choosing_player
+        self.in_hand.iter().position(|x| {
+            x.iter().any(|y| y == &(CardType::Numeric(4), CardSuit::Denari))
+        }).unwrap()
     }
 }
 
@@ -37,7 +36,7 @@ impl Game for Beccaccino {
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
         if self.players.len() > 4 {
             Err("La partita è al completo")
-        } else if self.in_hand[0].len() != 0 {
+        } else if !self.in_hand[0].is_empty() {
             Err("La partita è già cominciata")
         } else {
             self.players.push(player);
@@ -79,7 +78,7 @@ impl Game for Beccaccino {
     }
     fn start(&mut self) -> GameStatus {
         // Se la partita è già cominciata segnalo l'errore
-        if self.in_hand[0].len() > 0 {
+        if !self.in_hand[0].is_empty() {
             return GameStatus::InvalidMove("Il gioco è già iniziato, non puoi farlo reiniziare!");
         }
         // Genero il mazzo e do le carte
@@ -114,8 +113,8 @@ impl Game for Beccaccino {
                 .map(|x| format!("Team {}: {}", x.0 + 1, x.1.iter().map(|y| self.players[*y].name.clone()).join(", ")))
                 .join("\n"),
             self.get_scores().iter().enumerate().map(|x| format!("Team {}: {} punti", x.0, (x.1).1)).join("\n"),
-            &self.briscola.clone().map(|x| String::from(&x)).unwrap_or("non ancora scelta".to_owned()),
-            self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
+            &self.briscola.clone().map(|x| String::from(&x)).unwrap_or_else(|| "non ancora scelta".to_owned()),
+            self.get_next_player().map(|x| x.name).unwrap_or_else(|| "".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
         )
     }
@@ -142,7 +141,7 @@ impl Game for Beccaccino {
             }
             let player_index = self.players.iter().position(|x| x == by).unwrap();
             let next_player_index = (player_index + 1) % 4;
-            if self.table.len() == 0 {
+            if self.table.is_empty() {
                 // è la prima carta, salto le limitazioni del seme
                 let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
                 self.in_hand[player_index].remove(card_index);
@@ -159,7 +158,7 @@ impl Game for Beccaccino {
                     //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
                 } else {
                     let first_suit = &(self.table[0].1).1;
-                    if self.in_hand[player_index].iter().position(|x| &(x.1) == first_suit).is_some() {
+                    if self.in_hand[player_index].iter().any(|x| &(x.1) == first_suit) {
                         // Sta barando, fermiamolo!
                         return vec![
                             GameStatus::InvalidMove("Devi giocare una carta dello stesso seme della prima!"),

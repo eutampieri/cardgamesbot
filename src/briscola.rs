@@ -127,7 +127,7 @@ impl Game for Briscola {
             return Err("Non è possibile aggiungersi ad una partita già cominciata!");
         }
         if self.players.len() <= self.get_num_players().end as usize {
-            if self.players.len() == 0 {
+            if self.players.is_empty() {
                 self.next_player = Some(player.clone());
             }
             // Aggiungo il giocatore
@@ -199,7 +199,7 @@ impl Game for Briscola {
             teams,
             self.get_scores().iter().enumerate().map(|x| format!("Team {}: {} punti", x.0, (x.1).1)).join("\n"),
             String::from(&self.briscola),
-            self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
+            self.get_next_player().map(|x| x.name).unwrap_or_else(|| "".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
         )
     }
@@ -223,7 +223,7 @@ impl Default for Briscola {
             table: Vec::new(),
             players: Vec::new(),
             in_hand: HashMap::new(),
-            teams: teams,
+            teams,
             player_team: HashMap::new(),
             won_cards: wc,
             deck: vec![],

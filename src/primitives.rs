@@ -48,7 +48,6 @@ pub enum GameStatus {
     WaitingForChoice(Player, Vec<Card>),
     InvalidMove(&'static str),
     WaitingForChoiceCustomMessage(Player, Vec<Card>, &'static str),
-    GameReady,
     NotifyUser(Player, String),
     NotifyRoom(String),
     CardPlayed(Player, Card),

@@ -53,7 +53,7 @@ pub fn one() -> fraction::Fraction {
 }
 
 pub fn get_user_name(name: &str, surname: &Option<String>) -> String {
-    name.to_owned() + if surname.is_some(){" "} else {""} + &(surname.clone()).unwrap_or("".to_owned())
+    name.to_owned() + if surname.is_some(){" "} else {""} + &(surname.clone()).unwrap_or_else(|| "".to_owned())
 }
 
 pub fn compact_messages(list: Vec<Message>) -> Vec<Message> {
@@ -75,17 +75,16 @@ pub fn compact_messages(list: Vec<Message>) -> Vec<Message> {
                 .filter(|x| x.is_some())
                 .map(|x| x.unwrap())
                 .collect();
-            let keyboard: Option<Vec<Vec<Button>>>;
-            if keyboards.len() == 0 {
-                keyboard = None;
+            let keyboard = if keyboards.is_empty() {
+                None
             } else {
                 let mut tmp_keyboard = vec![];
                 for kbd in keyboards.iter_mut() {
                     tmp_keyboard.append(kbd);
                 }
-                keyboard = Some(tmp_keyboard);
-            }
-            Message{chat_id: *(x.0), text: concatenated_text, keyboard: keyboard}
+                Some(tmp_keyboard)
+            };
+            Message{chat_id: *(x.0), text: concatenated_text, keyboard}
         })
         .collect()
 }
