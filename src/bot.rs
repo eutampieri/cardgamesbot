@@ -47,6 +47,43 @@ fn init_game(
     game_agent::new_agent(game_tg_client, game_index, playable_games, receiver);
 }
 
+fn try_start_game(
+    player_id: telegram_bot_raw::types::refs::UserId,
+    player_games: &HashMap<telegram_bot_raw::types::refs::UserId, String>,
+    game_last_played: &mut HashMap<String, std::time::Instant>,
+    game_channel: &HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>,
+    client: &Telegram
+) {
+    use threading::ThreadMessage;
+    if let Some(game_id) = player_games.get(&player_id) {
+        if let Some(inst) = game_last_played.get_mut(game_id) {
+            *inst = std::time::Instant::now();
+        }
+        let channel = game_channel.get(game_id).unwrap();
+        channel.send(ThreadMessage::Start).expect("Could not start game");
+    } else {
+        client.send_message(("Gioco non trovato", player_id).into());
+    }
+}
+fn try_handle_move(
+    card: primitives::Card,
+    from: telegram_bot_raw::types::chat::User,
+    player_games: &HashMap<telegram_bot_raw::types::refs::UserId, String>,
+    game_last_played: &mut HashMap<String, std::time::Instant>,
+    game_channel: &HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>,
+    client: &Telegram
+) {
+    if let Some(game_id) = player_games.get(&from.id) {
+        if let Some(inst) = game_last_played.get_mut(game_id) {
+            *inst = std::time::Instant::now();
+        }
+        let channel = game_channel.get(game_id).unwrap();
+        channel.send(threading::ThreadMessage::HandleMove(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)}, card)).expect("Could not handle move");
+    } else {
+        client.send_message(("Gioco non trovato", from.id).into());
+    }
+}
+
 fn handle_callback_query(
     qry: telegram_bot_raw::types::callback_query::CallbackQuery,
     playable_games: &Vec<Box<dyn Game>>,
@@ -68,28 +105,11 @@ fn handle_callback_query(
         },
         "start" => {
             let player_id = qry.from.id;
-            if let Some(game_id) = player_games.get(&player_id) {
-                if let Some(inst) = game_last_played.get_mut(game_id) {
-                    *inst = std::time::Instant::now();
-                }
-                let channel = game_channel.get(game_id).unwrap();
-                channel.send(ThreadMessage::Start).expect("Could not start game");
-            } else {
-                client.send_message(("Gioco non trovato", player_id).into());
-            }
+            try_start_game(player_id, player_games, game_last_played, game_channel, client);
         },
         "handle_move" => {
             let card: primitives::Card = bincode::deserialize(&base64::decode(&data[1]).unwrap()).unwrap();
-            let player_id = qry.from.id;
-            if let Some(game_id) = player_games.get(&player_id) {
-                if let Some(inst) = game_last_played.get_mut(game_id) {
-                    *inst = std::time::Instant::now();
-                }
-                let channel = game_channel.get(game_id).unwrap();
-                channel.send(ThreadMessage::HandleMove(primitives::Player{id: qry.from.id.into(), name: utils::get_user_name(&qry.from.first_name, &qry.from.last_name)}, card)).expect("Could not handle move");
-            } else {
-                client.send_message(("Gioco non trovato", player_id).into());
-            }
+            try_handle_move(card, qry.from, player_games, game_last_played, game_channel, client);
         }
         _ => {}
     }
