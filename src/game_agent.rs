@@ -34,7 +34,11 @@ pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &V
                     game_is_running = false;
                 }
             }
-            for i in utils::compact_messages(status.iter().map(|x| x.dispatch(game)).flatten().collect::<Vec<Message>>()) {
+            for i in utils::compact_messages(status.iter()
+                .map(|x| x.dispatch(game)) // find out who's the recipient of each message
+                .flatten() // Flatten the double Vec
+                .collect::<Vec<Message>>()
+            ) {
                 match message_list.get_mut(&i.chat_id) {
                     Some(msg_id) => *msg_id = client.edit_message(i, *msg_id),
                     None => {
