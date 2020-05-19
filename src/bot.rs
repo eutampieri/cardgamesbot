@@ -37,7 +37,7 @@ fn init_game(
 ) {
     use threading::ThreadMessage;
     let game_id = ulid::Ulid::new().to_string();
-    let (sender, reciever) = mpsc::sync_channel(10);
+    let (sender, receiver) = mpsc::sync_channel(10);
     sender.send(ThreadMessage::AddPlayer(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
     player_games.insert(from.id, game_id.clone());
     game_channel.insert(game_id.clone(), sender);
