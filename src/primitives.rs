@@ -89,7 +89,7 @@ impl GameStatus {
             GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone()).into()],
             GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone()).into()],
             GameStatus::NotifyUser(p, _) => vec![(p, self.clone()).into()],
-            GameStatus::WaitingForPlayers(_) => {
+            GameStatus::WaitingForPlayers(_, _) => {
                 // This closure makes sure that only the game initiator
                 // gets the button to start the game.
                 use super::telegram::Message;

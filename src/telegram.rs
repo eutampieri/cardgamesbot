@@ -133,7 +133,7 @@ impl From<primitives::DispatchableStatus> for Message {
                     GameEnded => "La partita è finita!".to_owned(),
                     RoundWon(p) => format!("{} ha vinto questo round", p.name),
                     InProgress(p) => format!("Tocca a {}", p.name),
-                    WaitingForPlayers(_) => format!("In attesa di giocatori..."),
+                    WaitingForPlayers(_, p) => format!("{} si è unito alla partita", p.name),
                     WaitingForChoice(_, _) => "Scegli una carta:".to_owned(),
                     InvalidMove(msg) => format!("Questa mossa non è valida! {}", msg),
                     WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
@@ -145,7 +145,7 @@ impl From<primitives::DispatchableStatus> for Message {
             keyboard: {
                 use primitives::GameStatus::*;
                 match status.1.clone() {
-                    WaitingForPlayers(ready) => {
+                    WaitingForPlayers(ready, _) => {
                         if ready {
                             Some(vec![vec![Button{id: "start".to_owned(), text: "Avvia partita".to_owned()}]])
                         } else {

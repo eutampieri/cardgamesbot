@@ -41,7 +41,7 @@ impl Game for Beccaccino {
         } else {
             self.players.push(player.clone());
             if self.players.len() == 4 {
-                Ok(GameStatus::WaitingForPlayers(true))
+                Ok(GameStatus::WaitingForPlayers(true, player))
             } else {
                 Ok(GameStatus::WaitingForPlayers(false, player))
             }
