@@ -2,36 +2,31 @@ mod primitives;
 mod briscola;
 mod beccaccino;
 mod utils;
+mod telegram;
+mod threading;
+mod bot;
+mod game_agent;
+
 use primitives::Game;
-use text_io::read;
+use std::sync::mpsc;
+use std::collections::HashMap;
+
+// A game can last up to 10 minutes since the last action
+static MAX_GAME_DURATION: u64 = 600;
 
 fn main() {
-    println!("Hello, world!");
-    let mut b = beccaccino::Beccaccino::init();
-    println!("{:?}", b);
-    let p1 = primitives::Player{id: 1, name: "Anna".to_owned()};
-    let p2 = primitives::Player{id: 2, name: "Bob".to_owned()};
-    let p3 = primitives::Player{id: 3, name: "Carla".to_owned()};
-    let p4 = primitives::Player{id: 4, name: "Daniele".to_owned()};
-    println!("{:?}", b.add_player(p1.clone()));
-    println!("{:?}", b.add_player(p2.clone()));
-    println!("{:?}", b.add_player(p3.clone()));
-    println!("{:?}", b.add_player(p4.clone()));
-    let mut game_status = match b.start() {
-        primitives::GameStatus::WaitingForChoiceCustomMessage(x, y, z) => (x, y),
-        _ => {unimplemented!()}
-    };
-    loop {
-        println!("{}. Quale carta metti? {:?}", b.get_status(), game_status.1);
-        let index: usize = read!();
-        let card = game_status.1.clone()[index].clone();
-        let outcome = b.handle_move(&game_status.0, card);
-        println!("{:?}", outcome);
-        if let Some(_) = outcome.iter().find(|x| match x {primitives::GameStatus::GameEnded => true, _ => false}) {
-            break;
-        }
-        if let Some(primitives::GameStatus::WaitingForChoice(x, y)) = outcome.iter().find(|x| match x {primitives::GameStatus::WaitingForChoice(_, _) => true, _ => false}) {
-            game_status = (x.clone(), y.clone());
-        }
+    // Data storage
+    // Association between players and their respective games
+    let mut player_games: HashMap<telegram_bot_raw::types::refs::UserId, String> = HashMap::new();
+    let mut game_channel: HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>> = HashMap::new();
+    let mut game_last_played: HashMap<String, std::time::Instant> = HashMap::new();
+    
+    let mut playable_games: Vec<Box<dyn Game>> = Vec::new();
+    // List of playable games
+    playable_games.push(Box::from(briscola::Briscola::default()));
+    playable_games.push(Box::from(beccaccino::Beccaccino::default()));
+
+    println!("Starting CardGamesBot...");
+    let mut client = telegram::Telegram::init();
+    bot::main_bot_logic(&playable_games, &mut player_games, &mut game_channel, &mut game_last_played, &mut client)
     }
-}

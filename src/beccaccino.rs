@@ -15,10 +15,9 @@ pub struct Beccaccino {
 impl Beccaccino {
     /// WHo's got the 4 of denara? Well, he's to choose the briscola!!
     fn get_choosing_player(&self) -> usize {
-        let choosing_player = self.in_hand.iter().position(|x| {
-            x.iter().position(|y| y == &(CardType::Numeric(4), CardSuit::Denari)).is_some()
-        }).unwrap();
-        choosing_player
+        self.in_hand.iter().position(|x| {
+            x.iter().any(|y| y == &(CardType::Numeric(4), CardSuit::Denari))
+        }).unwrap()
     }
 }
 
@@ -32,25 +31,17 @@ impl Game for Beccaccino {
     fn get_name(&self) -> &str {
         "Beccaccino"
     }
-    fn init() -> Self {
-        Self {
-            players: vec![],
-            in_hand: vec![vec![], vec![], vec![], vec![]],
-            briscola: None,
-            table: vec![],
-            won_cards: vec![(vec![], false), (vec![], false)],
-            next_player: None
-        }
+    fn init(&mut self) {
     }
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
         if self.players.len() > 4 {
             Err("La partita è al completo")
-        } else if self.in_hand[0].len() != 0 {
+        } else if !self.in_hand[0].is_empty() {
             Err("La partita è già cominciata")
         } else {
             self.players.push(player.clone());
             if self.players.len() == 4 {
-                Ok(GameStatus::GameReady)
+                Ok(GameStatus::WaitingForPlayers(true, player))
             } else {
                 Ok(GameStatus::WaitingForPlayers(false, player))
             }
@@ -86,12 +77,15 @@ impl Game for Beccaccino {
         }
     }
     fn start(&mut self) -> GameStatus {
+        // Se la partita è già cominciata segnalo l'errore
+        if !self.in_hand[0].is_empty() {
+            return GameStatus::InvalidMove("Il gioco è già iniziato, non puoi farlo reiniziare!");
+        }
         // Genero il mazzo e do le carte
         let deck = utils::random_deck(CardDeckType::Briscola);
         for i in 0..4 {
             self.in_hand[i].extend_from_slice(&deck[i*10..(i+1)*10]);
         }
-        println!("{:?}", self);
         // Determino chi ha la briscola
         let choosing_player = self.get_choosing_player();
         self.next_player = Some(choosing_player);
@@ -117,8 +111,8 @@ impl Game for Beccaccino {
         format!("Partita di {}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
             self.get_name(),
             self.get_scores().iter().enumerate().map(|x| format!("{}: {} punti", (x.1).0.iter().map(|y| y.name.clone()).join(", "), (x.1).1)).join("\n"),
-            &self.briscola.clone().map(|x| String::from(&x)).unwrap_or("non ancora scelta".to_owned()),
-            self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
+            &self.briscola.clone().map(|x| String::from(&x)).unwrap_or_else(|| "non ancora scelta".to_owned()),
+            self.get_next_player().map(|x| x.name).unwrap_or_else(|| "".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
         )
     }
@@ -145,31 +139,38 @@ impl Game for Beccaccino {
             }
             let player_index = self.players.iter().position(|x| x == by).unwrap();
             let next_player_index = (player_index + 1) % 4;
-            if self.table.len() == 0 {
+            if self.table.is_empty() {
                 // è la prima carta, salto le limitazioni del seme
+                let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                self.in_hand[player_index].remove(card_index);
                 self.table.push((by.clone(), card));
                 self.next_player = Some(next_player_index);
             } else if self.table.len() < 4 {
                 // Controllo il seme
                 if card.1 == (self.table[0].1).1 {
                     // Il seme è giusto, aggiungo
+                    let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                    self.in_hand[player_index].remove(card_index);    
                     self.table.push((by.clone(), card));
                     self.next_player = Some(next_player_index);
                     //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
                 } else {
                     let first_suit = &(self.table[0].1).1;
-                    if self.in_hand[player_index].iter().position(|x| &(x.1) == first_suit).is_some() {
+                    if self.in_hand[player_index].iter().any(|x| &(x.1) == first_suit) {
                         // Sta barando, fermiamolo!
                         return vec![
                             GameStatus::InvalidMove("Devi giocare una carta dello stesso seme della prima!"),
                             GameStatus::WaitingForChoice(by.clone(), self.in_hand[player_index].clone())
                         ];
                     } else {
+                        let card_index = self.in_hand[player_index].iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+                        self.in_hand[player_index].remove(card_index);        
                         self.next_player = Some(next_player_index);
                         //vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
                     }
                 }
-            } else {
+            }
+            if self.table.len() == 4 {
                 // Se è il tavolo è pieno
                 // Calcolo il vincitore
                 let mut winner = (self.table[0]).clone().0;
@@ -195,14 +196,37 @@ impl Game for Beccaccino {
                 if self.in_hand.iter().map(|x| x.len()).max().unwrap() == 0 {
                     self.won_cards[winner_team_index].1 = true;
                     return vec![
-                        GameStatus::RoundWon(self.players[winner_index].clone(), self.players[winner_index].clone()),
-                        GameStatus::GameEnded
+                        GameStatus::RoundWon(self.players[winner_index].clone()),
+                        GameStatus::GameEnded,
+                        GameStatus::NotifyRoom(self.get_status())
                     ];
                 } else {
                     self.next_player = Some(winner_index);
                 }
             }
-            vec![GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone())]
+            vec![
+                GameStatus::WaitingForChoice(self.players[next_player_index].clone(), self.in_hand[next_player_index].clone()),
+                GameStatus::NotifyUser(self.players[next_player_index].clone(), self.get_status())
+            ]
+        }
+    }
+    fn get_players(&self) -> Vec<Player> {
+        self.players.clone()
+    }
+    fn get_new_instance(&self) -> Box<dyn Game> {
+        Box::new(Self::default())
+    }
+}
+
+impl Default for Beccaccino {
+    fn default() -> Self {
+        Self {
+            players: vec![],
+            in_hand: vec![vec![], vec![], vec![], vec![]],
+            briscola: None,
+            table: vec![],
+            won_cards: vec![(vec![], false), (vec![], false)],
+            next_player: None
         }
     }
 }
