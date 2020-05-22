@@ -48,11 +48,11 @@ impl Game for Beccaccino {
         } else if self.in_hand[0].len() != 0 {
             Err("La partita è già cominciata")
         } else {
-            self.players.push(player);
+            self.players.push(player.clone());
             if self.players.len() == 4 {
                 Ok(GameStatus::GameReady)
             } else {
-                Ok(GameStatus::WaitingForPlayers(false))
+                Ok(GameStatus::WaitingForPlayers(false, player))
             }
         }
     }

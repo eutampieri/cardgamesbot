@@ -43,7 +43,7 @@ pub enum GameStatus {
     RoundWon(Player, Player),
     GameEnded,
     InProgress(Player),
-    WaitingForPlayers(bool),
+    WaitingForPlayers(bool, Player),
     WaitingForChoice(Player, Vec<Card>),
     InvalidMove(&'static str),
     WaitingForChoiceCustomMessage(Player, Vec<Card>, &'static str),

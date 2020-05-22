@@ -151,8 +151,8 @@ impl Game for Briscola {
             self.in_hand.insert(player.clone(), hand);
             // Lo assegno ad un team
             self.teams[self.players.len() % 2].push(player.clone());
-            self.player_team.insert(player, self.players.len() % 2);
-            Ok(GameStatus::WaitingForPlayers(is_ready))
+            self.player_team.insert(player.clone(), self.players.len() % 2);
+            Ok(GameStatus::WaitingForPlayers(is_ready, player))
         } else {
             Err("Il gioco è pieno")
         }
