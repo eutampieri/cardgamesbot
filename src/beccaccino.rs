@@ -114,11 +114,9 @@ impl Game for Beccaccino {
             .collect()
     }
     fn get_status(&self) -> String {
-        format!("Partita di:\n{}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
-            vec![vec![0usize,2], vec![1, 3]].iter().enumerate()
-                .map(|x| format!("Team {}: {}", x.0 + 1, x.1.iter().map(|y| self.players[*y].name.clone()).join(", ")))
-                .join("\n"),
-            self.get_scores().iter().enumerate().map(|x| format!("Team {}: {} punti", x.0, (x.1).1)).join("\n"),
+        format!("Partita di {}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
+            self.get_name(),
+            self.get_scores().iter().enumerate().map(|x| format!("{}: {} punti", (x.1).0.iter().map(|y| y.name.clone()).join(", "), (x.1).1)).join("\n"),
             &self.briscola.clone().map(|x| String::from(&x)).unwrap_or("non ancora scelta".to_owned()),
             self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")

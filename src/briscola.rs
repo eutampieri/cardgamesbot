@@ -201,12 +201,9 @@ impl Game for Briscola {
             .collect()
     }
     fn get_status(&self) -> String {
-        let teams = self.teams.iter().enumerate()
-            .map(|x| format!("Team {}: {}", x.0 + 1, x.1.iter().map(|y| y.name.clone()).join(", ")))
-            .join("\n");
-        format!("Partita di:\n{}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
-            teams,
-            self.get_scores().iter().enumerate().map(|x| format!("Team {}: {} punti", x.0, (x.1).1)).join("\n"),
+        format!("Partita di {}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
+            self.get_name(),
+            self.get_scores().iter().enumerate().map(|x| format!("{}: {} punti", (x.1).0.iter().map(|y| y.name.clone()).join(", "), (x.1).1)).join("\n"),
             String::from(&self.briscola),
             self.get_next_player().map(|x| x.name).unwrap_or("".to_owned()),
             self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
