@@ -40,7 +40,7 @@ fn init_game(
     player_games.insert(from.id, game_id.clone());
     game_channel.insert(game_id.clone(), sender);
     game_last_played.insert(game_id.clone(), std::time::Instant::now());
-    client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/giocoacartebot?start={}", game_id), from.id).into());
+    client.send_message((format!("Per invitare altre persone condividi questo link: https://t.me/{}?start={}", &client.username, game_id), from.id).into());
     let game_tg_client = client.clone();
     game_agent::new_agent(game_tg_client, game_index, playable_games, receiver);
 }
@@ -133,6 +133,9 @@ fn handle_update(
                     let game_id = pieces[1].clone();
                     add_player_to_game(game_id, client, player_games, game_channel, msg.from);
                 }
+            } else if data == "/commit" {
+                use git_version::git_version;
+                client.send_message((format!("This instance is running on {}", git_version!()), msg.from.id).into());
             } else {
                 // Pass to thread
                 // It's a text message that has to be handled. If a user has more than one active game
