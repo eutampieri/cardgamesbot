@@ -29,4 +29,4 @@ fn main() {
     println!("Starting CardGamesBot...");
     let mut client = telegram::Telegram::init();
     bot::main_bot_logic(&playable_games, &mut player_games, &mut game_channel, &mut game_last_played, &mut client)
-    }
+}

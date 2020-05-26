@@ -201,9 +201,9 @@ pub fn main_bot_logic(
     loop {
         for update in client.get_updates() {
             handle_update(update, playable_games, player_games, game_channel, game_last_played, client);
-            handle_game_termination(game_last_played, game_channel);
-            purge_dead_games(get_dead_games(game_channel), player_games, game_channel, game_last_played);
         }
+        handle_game_termination(game_last_played, game_channel);
+        purge_dead_games(get_dead_games(game_channel), player_games, game_channel, game_last_played);
     }
 
 }
