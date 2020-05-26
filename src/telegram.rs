@@ -45,13 +45,28 @@ impl Message {
 pub struct Telegram {
     token: String,
     last_id: Option<u64>,
+    pub username: String,
 }
 
 impl Telegram {
     pub fn init() -> Self {
+        let token = env::var("TG_BOT_TOKEN").unwrap_or_else(|_| {
+            use text_io::read;
+            print!("Insert your Telegram Bot token: ");
+            read!("{}\n")
+        });
+        #[derive(Deserialize, Debug)]
+        struct Response {
+            ok: bool,
+            result: telegram_bot_raw::types::User,
+        }
+        let res = ureq::get(&format!("https://api.telegram.org/bot{}/getMe", &token))
+            .call().into_string().unwrap();
+        let parsed: Response = serde_json::from_str(&res).unwrap();
         Self{
-            token: env::var("TG_BOT_TOKEN").expect("Run specifying the env var TG_BOT_TOKEN"),
-            last_id: None
+            token,
+            last_id: None,
+            username: parsed.result.username.unwrap()
         }
     }
 
