@@ -51,7 +51,9 @@ pub struct Telegram {
 impl Telegram {
     pub fn init() -> Self {
         let token = env::var("TG_BOT_TOKEN").unwrap_or_else(|_| {
+            use std::io::Write;
             use text_io::read;
+            std::io::stdout().flush().unwrap();
             print!("Insert your Telegram Bot token: ");
             read!("{}\n")
         });
