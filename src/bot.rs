@@ -133,6 +133,9 @@ fn handle_update(
                     let game_id = pieces[1].clone();
                     add_player_to_game(game_id, client, player_games, game_channel, msg.from);
                 }
+            } else if data == "/commit" {
+                use git_version::git_version;
+                client.send_message((format!("This instance is running on {}", git_version!()), msg.from.id).into());
             } else {
                 // Pass to thread
                 // It's a text message that has to be handled. If a user has more than one active game
