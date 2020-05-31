@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use super::telegram::Telegram;
-use super::primitives::Game;
+use cardgames::primitives::Game;
 use super::*;
 use super::game_agent;
 
@@ -18,7 +18,7 @@ fn add_player_to_game(
         client.send_message(("Non puoi unirti a più partite contemporaneamente", from.id).into());
     } else if let Some(ch) = game_channel.get(&game_id) {
         player_games.insert(from.id, game_id.clone());
-        ch.send(threading::ThreadMessage::AddPlayer(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
+        ch.send(threading::ThreadMessage::AddPlayer(cardgames::primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
     } else {
         client.send_message(("Gioco non trovato!", from.id).into());
     }
@@ -36,7 +36,7 @@ fn init_game(
     use threading::ThreadMessage;
     let game_id = ulid::Ulid::new().to_string();
     let (sender, receiver) = mpsc::sync_channel(10);
-    sender.send(ThreadMessage::AddPlayer(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
+    sender.send(ThreadMessage::AddPlayer(cardgames::primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)})).unwrap();
     player_games.insert(from.id, game_id.clone());
     game_channel.insert(game_id.clone(), sender);
     game_last_played.insert(game_id.clone(), std::time::Instant::now());
@@ -64,7 +64,7 @@ fn try_start_game(
     }
 }
 fn try_handle_move(
-    card: primitives::Card,
+    card: cardgames::primitives::Card,
     from: telegram_bot_raw::types::chat::User,
     player_games: &HashMap<telegram_bot_raw::types::refs::UserId, String>,
     game_last_played: &mut HashMap<String, std::time::Instant>,
@@ -76,7 +76,7 @@ fn try_handle_move(
             *inst = std::time::Instant::now();
         }
         let channel = game_channel.get(game_id).unwrap();
-        channel.send(threading::ThreadMessage::HandleMove(primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)}, card)).expect("Could not handle move");
+        channel.send(threading::ThreadMessage::HandleMove(cardgames::primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)}, card)).expect("Could not handle move");
     } else {
         client.send_message(("Gioco non trovato", from.id).into());
     }
@@ -105,7 +105,7 @@ fn handle_callback_query(
             try_start_game(player_id, player_games, game_last_played, game_channel, client);
         },
         "handle_move" => {
-            let card: primitives::Card = bincode::deserialize(&base64::decode(&data[1]).unwrap()).unwrap();
+            let card: cardgames::primitives::Card = bincode::deserialize(&base64::decode(&data[1]).unwrap()).unwrap();
             try_handle_move(card, qry.from, player_games, game_last_played, game_channel, client);
         }
         _ => {}
@@ -201,9 +201,9 @@ pub fn main_bot_logic(
     loop {
         for update in client.get_updates() {
             handle_update(update, playable_games, player_games, game_channel, game_last_played, client);
-            handle_game_termination(game_last_played, game_channel);
-            purge_dead_games(get_dead_games(game_channel), player_games, game_channel, game_last_played);
         }
+        handle_game_termination(game_last_played, game_channel);
+        purge_dead_games(get_dead_games(game_channel), player_games, game_channel, game_last_played);
     }
 
 }

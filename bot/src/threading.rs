@@ -1,4 +1,4 @@
-use super::primitives::*;
+use cardgames::primitives::*;
 pub enum ThreadMessage {
     HandleMove(Player, Card),
     AddPlayer(Player),

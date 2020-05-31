@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use super::threading::ThreadMessage;
-use super::primitives;
+use cardgames::primitives;
 use super::utils;
 use super::telegram::{Telegram, Message};
-use primitives::Game;
+use cardgames::primitives::Game;
 
 pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &Vec<Box<dyn Game>>, receiver: std::sync::mpsc::Receiver<ThreadMessage>) {
     let game = Box::leak(playable_games[game_index].get_new_instance());
@@ -35,7 +35,7 @@ pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &V
                 }
             }
             for i in utils::compact_messages(status.iter()
-                .map(|x| x.dispatch(game)) // find out who's the recipient of each message
+                .map(|x| utils::dispatch_game_status(x.clone(), game)) // find out who's the recipient of each message
                 .flatten() // Flatten the double Vec
                 .collect::<Vec<Message>>()
             ) {

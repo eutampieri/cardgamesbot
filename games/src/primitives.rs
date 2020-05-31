@@ -2,6 +2,8 @@ use std::cmp::{PartialEq, Eq};
 use std::hash::Hash;
 use serde::{Serialize, Deserialize};
 
+pub type Card = (CardType, CardSuit);
+
 pub enum CardDeckType {
     Briscola,
     Poker,
@@ -20,18 +22,6 @@ pub enum CardSuit {
     Denari,
     Bastoni,
 }
-impl From<&CardSuit> for String {
-    fn from(s: &CardSuit) -> Self {
-        match s {
-            CardSuit::Bastoni => "🥢",
-            CardSuit::Spade => "🗡 ",
-            CardSuit::Coppe => "🏆",
-            CardSuit::Denari => "💰"
-        }.to_owned()
-    }
-}
-
-pub type Card = (CardType, CardSuit);
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct Player {
@@ -78,32 +68,13 @@ pub trait Game: Send {
     fn get_new_instance(&self) -> Box<dyn Game>;
 }
 
-pub type DispatchableStatus = (Player, GameStatus);
-
-impl GameStatus {
-    /// This function routes the status to the right players
-    pub fn dispatch(&self, game: &dyn Game) -> Vec<super::telegram::Message> {
-        match self.clone() {
-            // Messages for selected players
-            // GameStatus::InProgress(p) => vec![(p, self.clone())],
-            GameStatus::WaitingForChoice(p, _) => vec![(p, self.clone()).into()],
-            GameStatus::WaitingForChoiceCustomMessage(p, _, _) => vec![(p, self.clone()).into()],
-            GameStatus::NotifyUser(p, _) => vec![(p, self.clone()).into()],
-            GameStatus::WaitingForPlayers(_, _) => {
-                // This closure makes sure that only the game initiator
-                // gets the button to start the game.
-                use super::telegram::Message;
-                let mut res = vec![];
-                let mut players = game.get_players();
-                players.reverse();
-                let player = players.pop().unwrap();
-                let text = Message::from((player.clone(), self.clone())).text;
-                res.push((player, self.clone()).into());
-                res.append(&mut players.iter().map(|x| (x.clone(), GameStatus::NotifyUser(x.clone(), text.clone())).into()).collect());
-                res
-            }
-            // Everything else will sent to everybody in the game
-            _ => game.get_players().iter().map(|x| (x.clone(), self.clone()).into()).collect::<Vec<super::telegram::Message>>()
-        }
+impl From<&CardSuit> for String {
+    fn from(s: &CardSuit) -> Self {
+        match s {
+            CardSuit::Bastoni => "🥢",
+            CardSuit::Spade => "🗡 ",
+            CardSuit::Coppe => "🏆",
+            CardSuit::Denari => "💰"
+        }.to_owned()
     }
 }

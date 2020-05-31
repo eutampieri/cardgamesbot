@@ -1,13 +1,11 @@
 mod primitives;
-mod briscola;
-mod beccaccino;
 mod utils;
 mod telegram;
 mod threading;
 mod bot;
 mod game_agent;
 
-use primitives::Game;
+use cardgames::primitives::Game;
 use std::sync::mpsc;
 use std::collections::HashMap;
 
@@ -23,10 +21,10 @@ fn main() {
     
     let mut playable_games: Vec<Box<dyn Game>> = Vec::new();
     // List of playable games
-    playable_games.push(Box::from(briscola::Briscola::default()));
-    playable_games.push(Box::from(beccaccino::Beccaccino::default()));
+    playable_games.push(Box::from(cardgames::briscola::Briscola::default()));
+    playable_games.push(Box::from(cardgames::beccaccino::Beccaccino::default()));
 
     println!("Starting CardGamesBot...");
     let mut client = telegram::Telegram::init();
     bot::main_bot_logic(&playable_games, &mut player_games, &mut game_channel, &mut game_last_played, &mut client)
-    }
+}

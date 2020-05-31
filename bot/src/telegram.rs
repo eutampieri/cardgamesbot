@@ -1,9 +1,8 @@
 use std::env;
-use itertools::Itertools;
 use super::primitives;
-use super::utils;
 use serde::Deserialize;
-use primitives::Game;
+use cardgames::primitives::Game;
+use itertools::Itertools;
 
 #[derive(Debug, Clone)]
 pub struct Button {
@@ -53,8 +52,8 @@ impl Telegram {
         let token = env::var("TG_BOT_TOKEN").unwrap_or_else(|_| {
             use std::io::Write;
             use text_io::read;
-            std::io::stdout().flush().unwrap();
             print!("Insert your Telegram Bot token: ");
+            std::io::stdout().flush().unwrap();
             read!("{}\n")
         });
         #[derive(Deserialize, Debug)]
@@ -120,7 +119,7 @@ impl Telegram {
 }
 
 /// This function converts a list of cards into an array of buttons
-fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
+fn deck_of_buttons(cards: Vec<cardgames::primitives::Card>) -> Vec<Vec<Button>> {
     let mut res = vec![];
     // Now add a row every 3 cards
     for _ in (0..cards.len()).skip(3) {
@@ -131,7 +130,7 @@ fn deck_of_buttons(cards: Vec<super::primitives::Card>) -> Vec<Vec<Button>> {
     for (i, card) in cards.iter().enumerate() {
         let row_number = i / 3;
         res[row_number].push(Button{
-            text: utils::get_card_name(card),
+            text: cardgames::utils::get_card_name(card),
             id: format!("handle_move:{}", base64::encode(bincode::serialize(card).unwrap()))
         //                                                                  ^
         //I'm serializing cards to deserialize later -----------------------|
@@ -145,7 +144,7 @@ impl From<primitives::DispatchableStatus> for Message {
         Self{
             chat_id: status.0.id,
             text: {
-                use primitives::GameStatus::*;
+                use cardgames::primitives::GameStatus::*;
                 match status.1.clone() {
                     GameEnded => "La partita è finita!".to_owned(),
                     RoundWon(p) => format!("{} ha vinto questo round", p.name),
@@ -156,11 +155,11 @@ impl From<primitives::DispatchableStatus> for Message {
                     WaitingForChoiceCustomMessage(_, _, msg) => msg.to_string(),
                     NotifyUser(_, msg) => msg,
                     NotifyRoom(msg) => msg,
-                    CardPlayed(p, c) => format!("{} ha giocato {}", p.name, utils::get_card_name(&c)),
+                    CardPlayed(p, c) => format!("{} ha giocato {}", p.name, cardgames::utils::get_card_name(&c)),
                 }
             },
             keyboard: {
-                use primitives::GameStatus::*;
+                use cardgames::primitives::GameStatus::*;
                 match status.1.clone() {
                     WaitingForPlayers(ready, _) => {
                         if ready {
