@@ -1,5 +1,4 @@
-pub mod beccaccino;
-pub mod briscola;
+pub mod games;
 pub mod primitives;
 pub mod utils;
 

@@ -1,7 +1,7 @@
-use super::primitives::*;
+use crate::primitives::*;
 use std::collections::hash_map::*;
 use itertools::Itertools;
-use super::utils;
+use crate::utils;
 
 #[derive(Debug)]
 pub struct Briscola {

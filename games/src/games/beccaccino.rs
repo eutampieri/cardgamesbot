@@ -1,5 +1,5 @@
-use super::primitives::*;
-use super::utils;
+use crate::primitives::*;
+use crate::utils;
 use itertools::Itertools;
 
 #[derive(Debug)]
