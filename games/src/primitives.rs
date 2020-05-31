@@ -66,6 +66,9 @@ pub trait Game: Send {
     fn get_status(&self) -> String;
     fn get_players(&self) -> Vec<Player>;
     fn get_new_instance(&self) -> Box<dyn Game>;
+    /// This function gets called when a user sends a text message to the bot.
+    /// It should handle the message and pass it to the right users.
+    fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus>;
 }
 
 impl From<&CardSuit> for String {

@@ -206,6 +206,10 @@ impl Game for Briscola {
     fn get_new_instance(&self) -> Box<dyn Game> {
         Box::new(Self::default())
     }
+    fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus> {
+        // TODO Route the message to the right users
+        vec![]
+    }
 }
 
 impl Default for Briscola {
