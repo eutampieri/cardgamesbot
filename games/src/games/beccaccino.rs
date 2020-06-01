@@ -217,8 +217,17 @@ impl Game for Beccaccino {
         Box::new(Self::default())
     }
     fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus> {
-        // TODO Route the message to the right users
-        vec![]
+        // Check if the message is valid (striscio, busso or volo)
+        match message
+            .to_lowercase()
+            .as_str().chars()
+            .filter(|x| x.is_alphabetic())
+            .collect::<String>().as_str() {
+            "busso" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
+            "striscio" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
+            "volo" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
+            _ => vec![GameStatus::NotifyUser(from, "Puoi dire solo busso, striscio o volo.".to_owned())],
+        }
     }
 }
 

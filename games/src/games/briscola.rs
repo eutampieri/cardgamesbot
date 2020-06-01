@@ -207,8 +207,8 @@ impl Game for Briscola {
         Box::new(Self::default())
     }
     fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus> {
-        // TODO Route the message to the right users
-        vec![]
+        drop(from);
+        vec![GameStatus::NotifyRoom(message)]
     }
 }
 
