@@ -224,8 +224,8 @@ impl Game for Beccaccino {
             .filter(|x| x.is_alphabetic())
             .collect::<String>().as_str() {
             "busso" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
-            "striscio" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
-            "volo" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Busso", from.name))],
+            "striscio" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Striscio", from.name))],
+            "volo" => vec![GameStatus::NotifyRoom(format!("{} ha detto: Volo", from.name))],
             _ => vec![GameStatus::NotifyUser(from, "Puoi dire solo busso, striscio o volo.".to_owned())],
         }
     }
