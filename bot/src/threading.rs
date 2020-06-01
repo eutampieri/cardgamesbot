@@ -6,4 +6,5 @@ pub enum ThreadMessage {
     Kill,
     Ping,
     AboutToKill,
+    HandleStringMessage(Player, String)
 }

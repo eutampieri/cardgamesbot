@@ -23,6 +23,16 @@ pub fn new_agent(game_tg_client: Telegram, game_index: usize, playable_games: &V
                     tmp.push(primitives::GameStatus::NotifyRoom(game.get_status()));
                     tmp
                 },
+                ThreadMessage::HandleStringMessage(from, text) => {
+                    for message in game.handle_message(text, from).iter()
+                        .map(|x| utils::dispatch_game_status(x.clone(), game))
+                        .flatten() // Flatten the double Vec
+                        .collect::<Vec<Message>>()
+                    {
+                        client.send_message(message);
+                    }
+                    vec![]
+                },
                 ThreadMessage::Kill => {
                     break;
                 },

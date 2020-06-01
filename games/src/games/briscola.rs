@@ -207,8 +207,7 @@ impl Game for Briscola {
         Box::new(Self::default())
     }
     fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus> {
-        drop(from);
-        vec![GameStatus::NotifyRoom(message)]
+        vec![GameStatus::NotifyRoom(format!("{} ha detto: {}", from.name, message))]
     }
 }
 

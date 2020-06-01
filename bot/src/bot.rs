@@ -24,6 +24,21 @@ fn add_player_to_game(
     }
 }
 
+fn handle_string_message(
+    game_id: &String,
+    client: &Telegram,
+    game_channel: &mut HashMap<String, std::sync::mpsc::SyncSender<threading::ThreadMessage>>,
+    from: telegram_bot_raw::types::chat::User,
+    text: String
+) {
+    // Check wether the user is already playing a game
+    if let Some(ch) = game_channel.get(game_id) {
+        ch.send(threading::ThreadMessage::HandleStringMessage(cardgames::primitives::Player{id: from.id.into(), name: utils::get_user_name(&from.first_name, &from.last_name)}, text)).unwrap();
+    } else {
+        client.send_message(("Gioco non trovato!", from.id).into());
+    }
+}
+
 fn init_game(
     game_index: usize,
     from: telegram_bot_raw::types::chat::User,
@@ -140,6 +155,9 @@ fn handle_update(
                 // Pass to thread
                 // It's a text message that has to be handled. If a user has more than one active game
                 // I have to ask him which one
+                if let Some(game_id) = player_games.get(&msg.from.id) {
+                    handle_string_message(game_id, client, game_channel, msg.from, data);
+                }
             }
         } // ignoring other message kinds since they're useless for us
     }  else if let UpdateKind::CallbackQuery(qry) = update.kind {
