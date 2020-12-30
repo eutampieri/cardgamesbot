@@ -13,7 +13,7 @@ use std::sync::mpsc;
 // A game can last up to 10 minutes since the last action
 static MAX_GAME_DURATION: u64 = 600;
 
-pub fn register_handler(pagerduty_token: String, pagerduty_source: String) {
+pub fn register_handler() {
     let def_panic_handler = panic::take_hook();
 
     panic::set_hook(Box::new(move |x| {
@@ -31,6 +31,7 @@ pub fn register_handler(pagerduty_token: String, pagerduty_source: String) {
 }
 
 fn main() {
+    register_handler();
     // Data storage
     // Association between players and their respective games
     let mut player_games: HashMap<telegram_bot_raw::types::refs::UserId, String> = HashMap::new();
