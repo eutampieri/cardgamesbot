@@ -1,6 +1,22 @@
 use crate::primitives::*;
 #[derive(Default)]
-pub struct Scala40;
+pub struct Scala40 {
+    discarded: Vec<Card>,
+    scale: std::collections::HashMap<Player, Vec<Vec<Card>>>,
+    /// List of players
+    players: Vec<Player>,
+    /// Card in hand for each player
+    in_hand: std::collections::HashMap<Player, Vec<Card>>,
+    /// Teams
+    teams: Vec<Vec<Player>>,
+    player_team: std::collections::HashMap<Player, usize>,
+}
+
+impl Scala40 {
+    fn game_has_been_won(&self) -> bool {
+        false
+    }
+}
 
 impl Game for Scala40 {
     fn init(&mut self) {}

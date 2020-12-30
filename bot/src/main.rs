@@ -7,10 +7,28 @@ mod utils;
 
 use cardgames::primitives::Game;
 use std::collections::HashMap;
+use std::panic;
 use std::sync::mpsc;
 
 // A game can last up to 10 minutes since the last action
 static MAX_GAME_DURATION: u64 = 600;
+
+pub fn register_handler(pagerduty_token: String, pagerduty_source: String) {
+    let def_panic_handler = panic::take_hook();
+
+    panic::set_hook(Box::new(move |x| {
+        let output = format!("{} {:?}", x, x);
+        std::fs::write(
+            &format!(
+                "cardgames_panic_{}.txt",
+                std::time::UNIX_EPOCH.elapsed().unwrap().as_secs()
+            ),
+            output,
+        )
+        .unwrap();
+        def_panic_handler(x);
+    }));
+}
 
 fn main() {
     // Data storage
