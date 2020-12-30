@@ -1,7 +1,7 @@
 use crate::primitives::*;
-use std::collections::hash_map::*;
-use itertools::Itertools;
 use crate::utils;
+use itertools::Itertools;
+use std::collections::hash_map::*;
 
 #[derive(Debug)]
 pub struct Briscola {
@@ -23,36 +23,37 @@ pub struct Briscola {
 
 impl Game for Briscola {
     fn get_card_rank(card: &CardType) -> fraction::Fraction {
-        fraction::Fraction::new(match card {
-            CardType::Jack => 2,
-            CardType::Queen => 3,
-            CardType::King => 4,
-            CardType::Numeric(x) => {
-                match x {
+        fraction::Fraction::new(
+            match card {
+                CardType::Jack => 2,
+                CardType::Queen => 3,
+                CardType::King => 4,
+                CardType::Numeric(x) => match x {
                     1 => 11,
                     3 => 10,
-                    _ => 0
-                }
-            }
-        } as u8, 1u8)
+                    _ => 0,
+                },
+                CardType::Jolly => 0,
+            } as u8,
+            1u8,
+        )
     }
     fn get_card_sorting_rank(card: &CardType) -> u8 {
         match card {
             CardType::Jack => 6,
             CardType::Queen => 7,
             CardType::King => 8,
-            CardType::Numeric(x) => {
-                match x {
-                    1 => 10,
-                    3 => 9,
-                    7 => 5,
-                    6 => 4,
-                    5 => 3,
-                    4 => 2,
-                    2 => 1,
-                    _ => 0
-                }
-            }
+            CardType::Numeric(x) => match x {
+                1 => 10,
+                3 => 9,
+                7 => 5,
+                6 => 4,
+                5 => 3,
+                4 => 2,
+                2 => 1,
+                _ => 0,
+            },
+            CardType::Jolly => 0,
         }
     }
     fn init(&mut self) {
@@ -80,11 +81,18 @@ impl Game for Briscola {
         let next_player = self.players.clone()[(player_index + 1) % self.players.len()].clone();
         self.next_player = Some(next_player.clone());
         // Tolgo la carta dalle carte in mano
-        let card_index = self.in_hand.get(by).unwrap().iter().position(|x| x.clone() == card).expect("Non trovo la carta");
+        let card_index = self
+            .in_hand
+            .get(by)
+            .unwrap()
+            .iter()
+            .position(|x| x.clone() == card)
+            .expect("Non trovo la carta");
         self.in_hand.get_mut(by).unwrap().remove(card_index);
         // E la metto sul tavolo
         self.table.push((by.clone(), card.clone()));
-        if self.table.len() == self.players.len() { // Se tutti hanno messo una carta
+        if self.table.len() == self.players.len() {
+            // Se tutti hanno messo una carta
             // Determinare la carta vincente
             let mut winner = (self.table[0]).clone().0;
             let mut winning_suit = &(&(self.table[0]).1).clone().1;
@@ -101,24 +109,43 @@ impl Game for Briscola {
                 }
             }
             // Abbiamo determinato chi ha vinto la mano, assegnamogliela
-            self.won_cards[*self.player_team.get(&winner).unwrap()].append(&mut self.table.iter().map(|x| x.1.clone()).collect());
+            self.won_cards[*self.player_team.get(&winner).unwrap()]
+                .append(&mut self.table.iter().map(|x| x.1.clone()).collect());
             self.table.clear(); // Just in case...
             if self.deck.len() >= self.players.len() {
-                for i in 0..self.players.len(){
-                    let receiving_player_position = (i + self.players.iter().position(|x| x == &winner).unwrap()) % self.players.len();
-                    self.in_hand.get_mut(&self.players[receiving_player_position]).unwrap().push(self.deck.pop().unwrap());
+                for i in 0..self.players.len() {
+                    let receiving_player_position =
+                        (i + self.players.iter().position(|x| x == &winner).unwrap())
+                            % self.players.len();
+                    self.in_hand
+                        .get_mut(&self.players[receiving_player_position])
+                        .unwrap()
+                        .push(self.deck.pop().unwrap());
                 }
             }
             self.next_player = Some(winner.clone());
             let game_ended = self.in_hand.iter().map(|x| x.1.len()).max().unwrap() == 0;
-            let mut res = vec![GameStatus::CardPlayed(by.clone(), card), GameStatus::WaitingForChoice(winner.clone(), self.in_hand.get(&winner).unwrap().clone()),GameStatus::RoundWon(winner)];
+            let mut res = vec![
+                GameStatus::CardPlayed(by.clone(), card),
+                GameStatus::WaitingForChoice(
+                    winner.clone(),
+                    self.in_hand.get(&winner).unwrap().clone(),
+                ),
+                GameStatus::RoundWon(winner),
+            ];
             if game_ended {
                 res.push(GameStatus::GameEnded);
             }
             res
         } else {
             self.next_player = Some(next_player.clone());
-            vec![GameStatus::WaitingForChoice(next_player.clone(), self.in_hand.get(&next_player).unwrap().clone()), GameStatus::InProgress(next_player)]
+            vec![
+                GameStatus::WaitingForChoice(
+                    next_player.clone(),
+                    self.in_hand.get(&next_player).unwrap().clone(),
+                ),
+                GameStatus::InProgress(next_player),
+            ]
         }
     }
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
@@ -132,12 +159,14 @@ impl Game for Briscola {
             }
             // Aggiungo il giocatore
             self.players.push(player.clone());
-            let is_ready = self.players.len() <= self.get_num_players().end as usize && self.get_num_players().start as usize <= self.players.len();
+            let is_ready = self.players.len() <= self.get_num_players().end as usize
+                && self.get_num_players().start as usize <= self.players.len();
             let hand = Vec::new();
             self.in_hand.insert(player.clone(), hand);
             // Lo assegno ad un team
             self.teams[self.players.len() % 2].push(player.clone());
-            self.player_team.insert(player.clone(), self.players.len() % 2);
+            self.player_team
+                .insert(player.clone(), self.players.len() % 2);
             Ok(GameStatus::WaitingForPlayers(is_ready, player))
         } else {
             Err("Il gioco è pieno")
@@ -172,7 +201,10 @@ impl Game for Briscola {
         // Do le carte
         for player in &self.players {
             for _ in 0..3 {
-                self.in_hand.get_mut(player).unwrap().push(self.deck.pop().unwrap());
+                self.in_hand
+                    .get_mut(player)
+                    .unwrap()
+                    .push(self.deck.pop().unwrap());
             }
         }
         let player = self.players[0].clone();
@@ -180,24 +212,37 @@ impl Game for Briscola {
         GameStatus::WaitingForChoice(player.clone(), self.in_hand.get(&player).unwrap().clone())
     }
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)> {
-        self.teams.iter()
+        self.teams
+            .iter()
             .zip(self.won_cards.iter())
             .map(|x| {
                 let player_lst = x.0.clone();
-                let score = x.1.iter()
-                    .map(|x| Self::get_card_rank(&x.0))
-                    .sum();
+                let score = x.1.iter().map(|x| Self::get_card_rank(&x.0)).sum();
                 (player_lst, score)
             })
             .collect()
     }
     fn get_status(&self) -> String {
-        format!("Partita di {}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
+        format!(
+            "Partita di {}\nPunteggi:\n{}\nBriscola è: {}\nTocca a: {}\nCarte sul tavolo:\n{}",
             self.get_name(),
-            self.get_scores().iter().enumerate().map(|x| format!("{}: {} punti", (x.1).0.iter().map(|y| y.name.clone()).join(", "), (x.1).1)).join("\n"),
+            self.get_scores()
+                .iter()
+                .enumerate()
+                .map(|x| format!(
+                    "{}: {} punti",
+                    (x.1).0.iter().map(|y| y.name.clone()).join(", "),
+                    (x.1).1
+                ))
+                .join("\n"),
             String::from(&self.briscola),
-            self.get_next_player().map(|x| x.name).unwrap_or_else(|| "".to_owned()),
-            self.table.iter().map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name)).join("\n")
+            self.get_next_player()
+                .map(|x| x.name)
+                .unwrap_or_else(|| "".to_owned()),
+            self.table
+                .iter()
+                .map(|x| format!("- {} ({})", utils::get_card_name(&x.1), x.0.name))
+                .join("\n")
         )
     }
     fn get_players(&self) -> Vec<Player> {
@@ -207,7 +252,10 @@ impl Game for Briscola {
         Box::new(Self::default())
     }
     fn handle_message(&self, message: String, from: Player) -> Vec<GameStatus> {
-        vec![GameStatus::NotifyRoom(format!("{} ha detto: {}", from.name, message))]
+        vec![GameStatus::NotifyRoom(format!(
+            "{} ha detto: {}",
+            from.name, message
+        ))]
     }
 }
 

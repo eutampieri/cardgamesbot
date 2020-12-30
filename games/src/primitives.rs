@@ -1,6 +1,6 @@
-use std::cmp::{PartialEq, Eq};
+use serde::{Deserialize, Serialize};
+use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
-use serde::{Serialize, Deserialize};
 
 pub type Card = (CardType, CardSuit);
 
@@ -13,7 +13,8 @@ pub enum CardType {
     Numeric(u8),
     King,
     Queen, // Cavallo in Briscola
-    Jack, // Fante in Briscola
+    Jack,  // Fante in Briscola
+    Jolly, // Poker
 }
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum CardSuit {
@@ -57,8 +58,12 @@ pub trait Game: Send {
     /// The implementor of the game logic
     fn handle_move(&mut self, by: &Player, card: Card) -> Vec<GameStatus>;
     /// The points associated to each card
-    fn get_card_rank(card: &CardType) -> fraction::Fraction where Self: Sized;
-    fn get_card_sorting_rank(card: &CardType) -> u8 where Self: Sized;
+    fn get_card_rank(card: &CardType) -> fraction::Fraction
+    where
+        Self: Sized;
+    fn get_card_sorting_rank(card: &CardType) -> u8
+    where
+        Self: Sized;
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str>;
     fn get_next_player(&self) -> Option<Player>;
     fn start(&mut self) -> GameStatus;
@@ -77,7 +82,8 @@ impl From<&CardSuit> for String {
             CardSuit::Bastoni => "🥢",
             CardSuit::Spade => "🗡 ",
             CardSuit::Coppe => "🏆",
-            CardSuit::Denari => "💰"
-        }.to_owned()
+            CardSuit::Denari => "💰",
+        }
+        .to_owned()
     }
 }
