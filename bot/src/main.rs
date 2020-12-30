@@ -17,7 +17,8 @@ pub fn register_handler() {
     let def_panic_handler = panic::take_hook();
 
     panic::set_hook(Box::new(move |x| {
-        let output = format!("{} {:?}", x, x);
+        use git_version::git_version;
+        let output = format!("Version: {}\n{} {:?}", git_version!(), x, x);
         std::fs::write(
             &format!(
                 "cardgames_panic_{}.txt",
