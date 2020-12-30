@@ -1,4 +1,5 @@
 use crate::primitives::*;
+#[derive(Default)]
 pub struct Scala40;
 
 impl Game for Scala40 {
