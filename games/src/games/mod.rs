@@ -1,3 +1,3 @@
-pub mod briscola;
 pub mod beccaccino;
-pub mod scala40;
+pub mod briscola;
+//pub mod scala40;
