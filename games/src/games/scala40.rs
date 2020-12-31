@@ -10,16 +10,22 @@ pub struct Scala40 {
     /// Teams
     teams: Vec<Vec<Player>>,
     player_team: std::collections::HashMap<Player, usize>,
+    started: bool,
 }
 
 impl Scala40 {
     fn game_has_been_won(&self) -> bool {
         false
     }
+    fn is_card_stackable(&self, player: Player, card: Card) -> bool {
+        false
+    }
 }
 
 impl Game for Scala40 {
-    fn init(&mut self) {}
+    fn init(&mut self) {
+        //
+    }
 
     fn get_name(&self) -> &str {
         "Scala 40"
@@ -30,7 +36,7 @@ impl Game for Scala40 {
     }
 
     fn get_num_players(&self) -> std::ops::Range<u8> {
-        2..4
+        2..6
     }
 
     fn handle_move(&mut self, by: &Player, card: Card) -> Vec<GameStatus> {
@@ -58,7 +64,18 @@ impl Game for Scala40 {
     }
 
     fn add_player(&mut self, player: Player) -> Result<GameStatus, &str> {
-        todo!()
+        if self.started {
+            Err("Game has already been started")
+        } else if self.players.len() <= self.get_num_players().end as usize {
+            self.players.push(player);
+            //self.in_hand.insert(&player, vec![]);
+            Ok(GameStatus::WaitingForPlayers(
+                self.players.len() >= self.get_num_players().start as usize,
+                player,
+            ))
+        } else {
+            Err("The game is full")
+        }
     }
 
     fn get_next_player(&self) -> Option<Player> {
@@ -66,7 +83,8 @@ impl Game for Scala40 {
     }
 
     fn start(&mut self) -> GameStatus {
-        todo!()
+        let mut deck = crate::utils::random_deck(CardDeckType::Poker);
+        deck.append(&mut crate::utils::random_deck(CardDeckType::Poker));
     }
 
     fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)> {

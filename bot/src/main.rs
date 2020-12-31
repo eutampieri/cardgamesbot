@@ -46,7 +46,8 @@ fn main() {
     playable_games.push(Box::from(
         cardgames::games::beccaccino::Beccaccino::default(),
     ));
-    playable_games.push(Box::from(cardgames::games::scala40::Scala40::default()));
+    Disable Scala 40
+    //playable_games.push(Box::from(cardgames::games::scala40::Scala40::default()));
 
     println!("Starting CardGamesBot...");
     let mut client = telegram::Telegram::init();
