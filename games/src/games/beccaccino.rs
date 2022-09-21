@@ -1,6 +1,5 @@
 use crate::primitives::*;
 use crate::utils;
-use fraction::Fraction;
 use itertools::Itertools;
 
 #[derive(Debug)]
