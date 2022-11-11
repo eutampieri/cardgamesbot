@@ -50,18 +50,18 @@ impl Game for Beccaccino {
             }
         }
     }
-    fn get_card_rank(card: &CardType) -> fraction::Fraction {
+    fn get_card_rank(card: &CardType) -> fraction::GenericFraction<u8> {
         match card {
-            CardType::Jack => fraction::Fraction::new(1u8, 3u8),
-            CardType::Queen => fraction::Fraction::new(1u8, 3u8),
-            CardType::King => fraction::Fraction::new(1u8, 3u8),
+            CardType::Jack => fraction::GenericFraction::new(1u8, 3u8),
+            CardType::Queen => fraction::GenericFraction::new(1u8, 3u8),
+            CardType::King => fraction::GenericFraction::new(1u8, 3u8),
             CardType::Numeric(x) => match x {
-                1 => fraction::Fraction::new(1u8, 1u8),
-                2 => fraction::Fraction::new(1u8, 3u8),
-                3 => fraction::Fraction::new(1u8, 3u8),
-                _ => fraction::Fraction::new(0u8, 3u8),
+                1 => fraction::GenericFraction::new(1u8, 1u8),
+                2 => fraction::GenericFraction::new(1u8, 3u8),
+                3 => fraction::GenericFraction::new(1u8, 3u8),
+                _ => fraction::GenericFraction::new(0u8, 3u8),
             },
-            CardType::Jolly => fraction::Fraction::new(0u8, 0u8),
+            CardType::Jolly => fraction::GenericFraction::new(0u8, 0u8),
         }
     }
     fn get_card_sorting_rank(card: &CardType) -> u8 {
@@ -103,7 +103,7 @@ impl Game for Beccaccino {
     fn get_next_player(&self) -> Option<Player> {
         self.next_player.map(|x| self.players[x].clone())
     }
-    fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)> {
+    fn get_scores(&self) -> Vec<(Vec<Player>, fraction::GenericFraction<u8>)> {
         vec![vec![0usize, 2], vec![1, 3]]
             .iter()
             .zip(self.won_cards.iter())
@@ -115,8 +115,12 @@ impl Game for Beccaccino {
                     } else {
                         utils::zero()
                     }
-                } + (y.1).0.iter().map(|x| Self::get_card_rank(&x.0)).sum();
-                (player_lst, score.floor())
+                } + (y.1)
+                    .0
+                    .iter()
+                    .map(|x| Self::get_card_rank(&x.0))
+                    .fold(fraction::GenericFraction::new(0u8, 0u8), |acc, x| acc + x);
+                (player_lst, score)
             })
             .collect()
     }

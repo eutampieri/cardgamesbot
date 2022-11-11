@@ -59,11 +59,11 @@ pub fn random_deck(of_type: CardDeckType) -> Vec<Card> {
     }
 }
 
-pub fn zero() -> fraction::Fraction {
-    fraction::Fraction::new(0u8, 1u8)
+pub fn zero() -> fraction::GenericFraction<u8> {
+    fraction::GenericFraction::new(0u8, 1u8)
 }
-pub fn one() -> fraction::Fraction {
-    fraction::Fraction::new(1u8, 1u8)
+pub fn one() -> fraction::GenericFraction<u8> {
+    fraction::GenericFraction::new(1u8, 1u8)
 }
 
 pub fn get_card_name(card: &Card) -> String {

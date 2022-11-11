@@ -22,8 +22,8 @@ pub struct Briscola {
 }
 
 impl Game for Briscola {
-    fn get_card_rank(card: &CardType) -> fraction::Fraction {
-        fraction::Fraction::new(
+    fn get_card_rank(card: &CardType) -> fraction::GenericFraction<u8> {
+        fraction::GenericFraction::new(
             match card {
                 CardType::Jack => 2,
                 CardType::Queen => 3,
@@ -211,7 +211,7 @@ impl Game for Briscola {
         self.started = true;
         GameStatus::WaitingForChoice(player.clone(), self.in_hand.get(&player).unwrap().clone())
     }
-    fn get_scores(&self) -> Vec<(Vec<Player>, fraction::Fraction)> {
+    fn get_scores(&self) -> Vec<(Vec<Player>, fraction::GenericFraction<u8>)> {
         self.teams
             .iter()
             .zip(self.won_cards.iter())
