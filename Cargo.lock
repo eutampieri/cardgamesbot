@@ -50,10 +50,10 @@ checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
 
 [[package]]
 name = "cardgames"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "fraction",
- "itertools",
+ "itertools 0.11.0",
  "rand",
  "serde",
 ]
@@ -66,7 +66,7 @@ dependencies = [
  "bincode",
  "cardgames",
  "git-version",
- "itertools",
+ "itertools 0.10.5",
  "pct-str",
  "serde",
  "serde_json",
@@ -184,6 +184,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
 dependencies = [
  "either",
 ]
