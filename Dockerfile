@@ -1,4 +1,5 @@
 FROM rust AS builder
+ARG GITHUB_SHA
 RUN mkdir /app
 COPY . /app
 WORKDIR /app
