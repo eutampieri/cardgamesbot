@@ -1,6 +1,6 @@
 [package]
 name = "cardgames"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["Eugenio Tampieri <eugenio@eutampieri.eu>"]
 edition = "2018"
 description = "A collection of (mostly italians) card games"
