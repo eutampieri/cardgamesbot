@@ -1,7 +1,6 @@
 FROM rust AS builder
 RUN mkdir /app
 COPY . /app
-COPY .git /app
 WORKDIR /app
 RUN cargo build --release
 
