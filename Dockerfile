@@ -2,7 +2,7 @@ FROM rust AS builder
 RUN mkdir /app
 COPY . /app
 WORKDIR /app
-RUN cargo build --release
+RUN cargo build --release --features github
 
 
 FROM ubuntu:jammy
