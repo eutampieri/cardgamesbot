@@ -215,18 +215,9 @@ fn handle_update(
                     add_player_to_game(game_id, client, player_games, game_channel, msg.from);
                 }
             } else if data == "/commit" {
-                #[cfg(not(feature = "github"))]
-                fn get_git_version() -> &'static str {
-                    use git_version::git_version;
-                    git_version!()
-                }
-                #[cfg(feature = "github")]
-                fn get_git_version() -> &'static str {
-                    env!("GITHUB_SHA")
-                }
                 client.send_message(
                     (
-                        format!("This instance is running on {}", get_git_version()),
+                        format!("This instance is running on {}", crate::get_git_version()),
                         msg.from.id,
                     )
                         .into(),

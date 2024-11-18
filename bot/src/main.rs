@@ -13,12 +13,23 @@ use std::sync::mpsc;
 // A game can last up to 10 minutes since the last action
 static MAX_GAME_DURATION: u64 = 600;
 
+#[cfg(not(feature = "github"))]
+#[inline(always)]
+pub fn get_git_version() -> &'static str {
+    use git_version::git_version;
+    git_version!()
+}
+#[cfg(feature = "github")]
+#[inline(always)]
+pub fn get_git_version() -> &'static str {
+    env!("GITHUB_SHA")
+}
+
 pub fn register_handler() {
     let def_panic_handler = panic::take_hook();
 
     panic::set_hook(Box::new(move |x| {
-        use git_version::git_version;
-        let output = format!("Version: {}\n{} {:?}", git_version!(), x, x);
+        let output = format!("Version: {}\n{} {:?}", get_git_version(), x, x);
         std::fs::write(
             &format!(
                 "cardgames_panic_{}.txt",
