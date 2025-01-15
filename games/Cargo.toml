@@ -1,6 +1,6 @@
 [package]
 name = "cardgames"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Eugenio Tampieri <eugenio@eutampieri.eu>"]
 edition = "2018"
 description = "A collection of (mostly italians) card games"
@@ -11,7 +11,7 @@ keywords = ["telegram", "telegram-bot", "bot", "card", "games"]
 categories = ["games"]
 
 [dependencies]
-itertools = "0.13"
+itertools = "0.14"
 serde = { version = "1.0", features = ["derive"] }
 fraction = "0.15"
 rand = "0.8"
